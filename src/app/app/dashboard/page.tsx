@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { SymptomSeverity } from "@prisma/client";
 import {
   AlertTriangle,
   CalendarCheck,
@@ -10,6 +11,7 @@ import {
   Plus,
   Utensils,
   Dumbbell,
+  Activity,
 } from "lucide-react";
 import { DashboardShell, Footer } from "@/components/layout";
 import { StatusBadge } from "@/components/status-badge";
@@ -42,6 +44,20 @@ const taskStyles = {
     iconBox: "bg-white border-[#CBD5E1] text-[#475569]",
   },
 };
+
+function trendLabel(values: number[], goal?: number) {
+  const latest = values[0] ?? 0;
+  const oldest = values[Math.min(values.length - 1, 2)] ?? latest;
+  const direction = latest > oldest ? "Improving" : latest < oldest ? "Lower" : "Steady";
+  const goalText = goal ? `${Math.round((latest / goal) * 100)}% of target today` : "last 3 days";
+
+  return { direction, goalText };
+}
+
+function guidancePreview(message: string) {
+  const firstSentence = message.split(".")[0]?.trim();
+  return firstSentence ? `${firstSentence}.` : message;
+}
 
 function RoleSelection() {
   return (
@@ -155,33 +171,85 @@ export default async function PatientDashboard() {
     hydrationGoal: patientProfile.hydrationGoalOz,
     proteinGoal: patientProfile.proteinGoalGrams,
   });
+  const highestFlag = patientProfile.riskFlags[0];
+  const needsDoseAwareness = doseRhythm.status !== "On schedule";
+  const primaryStatus = highestFlag
+    ? {
+        label: highestFlag.level === "URGENT" ? "Contact clinician" : "Review flag",
+        tone: highestFlag.level === "URGENT" ? "coral" : "amber",
+        title: highestFlag.title,
+        explanation: highestFlag.recommendation ?? "Review this with your clinician.",
+      }
+    : needsDoseAwareness
+      ? {
+          label: doseRhythm.status,
+          tone: doseRhythm.status === "Needs review" ? "coral" : "amber",
+          title: "Dose rhythm needs a check-in",
+          explanation: doseRhythm.explanation,
+        }
+      : {
+          label: "On track",
+          tone: "green",
+          title: "You are on track today",
+          explanation: "No active safety flags. Keep logging protein, hydration, symptoms, and movement.",
+        };
+  const scoreDrivers = [
+    "protein consistency",
+    "hydration consistency",
+    "movement or strength activity",
+    "energy trend",
+    "pace of weight change",
+  ];
+  const whyScore =
+    muscleScore.score >= 84
+      ? "Strong protein and activity signals are carrying the score."
+      : muscleScore.score >= 68
+        ? "The score is stable, with the most room to improve in protein, hydration, or movement consistency."
+        : "The score is lower because one or more core habits have not been logged consistently this week.";
+  const hydrationPattern = trendLabel(hydrationValues.slice(0, 3), patientProfile.hydrationGoalOz);
+  const proteinPattern = trendLabel(proteinValues.slice(0, 3), patientProfile.proteinGoalGrams);
+  const symptomBurden = patientProfile.symptomLogs.slice(0, 3).filter((log) =>
+    [log.nausea, log.vomiting, log.constipation, log.diarrhea, log.reflux, log.fatigue, log.abdominalPain].some(
+      (severity) => severity === SymptomSeverity.MODERATE || severity === SymptomSeverity.SEVERE,
+    ),
+  ).length;
+  const symptomPattern = symptomBurden === 0 ? "Quiet" : symptomBurden === 1 ? "Watch" : "Review";
+  const consistencyDays = patientProfile.dailyCheckIns.filter((checkIn) => {
+    const nutrition = patientProfile.nutritionLogs.find((log) => log.loggedAt.toDateString() === checkIn.checkInDate.toDateString());
+    const hydration = patientProfile.hydrationLogs.find((log) => log.loggedAt.toDateString() === checkIn.checkInDate.toDateString());
+    return (nutrition?.proteinGrams ?? 0) >= patientProfile.proteinGoalGrams * 0.6 && (hydration?.ounces ?? 0) >= patientProfile.hydrationGoalOz * 0.6;
+  }).length;
+  const consistencySignal =
+    consistencyDays >= 5
+      ? { label: "You're consistent this week", helper: `${consistencyDays} steady check-in days logged`, tone: "green" as const }
+      : { label: "Consistency dropped", helper: `${consistencyDays} steady check-in days this week`, tone: "amber" as const };
   const generatedPlan = [
     ...(todayProtein < patientProfile.proteinGoalGrams
-      ? [{ label: "Protein anchor", value: `${todayProtein}g of ${patientProfile.proteinGoalGrams}g logged`, status: "Due", href: "/app/check-in" }]
+      ? [{ label: "Protein anchor", value: `${todayProtein}g of ${patientProfile.proteinGoalGrams}g logged`, status: "Due", href: "/app/check-in", action: "Log protein" }]
       : []),
     ...(todayHydration < patientProfile.hydrationGoalOz
-      ? [{ label: "Hydration target", value: `${todayHydration}oz of ${patientProfile.hydrationGoalOz}oz logged`, status: "Due", href: "/app/check-in" }]
+      ? [{ label: "Hydration target", value: `${todayHydration}oz of ${patientProfile.hydrationGoalOz}oz logged`, status: "Due", href: "/app/check-in", action: "Add water" }]
       : []),
     ...(!todaySymptoms
-      ? [{ label: "Symptom check", value: "Nausea, reflux, fatigue, abdominal pain", status: "Log", href: "/app/check-in" }]
+      ? [{ label: "Symptom check", value: "Nausea, reflux, fatigue, abdominal pain", status: "Log", href: "/app/check-in", action: "Log symptoms" }]
       : []),
     ...(isDoseDay
-      ? [{ label: "Dose reminder", value: `${plan?.medication} ${plan?.doseMg}mg scheduled today`, status: "Planned", href: "/app/medication" }]
+      ? [{ label: "Dose reminder", value: `${plan?.medication} ${plan?.doseMg}mg scheduled today`, status: "Planned", href: "/app/medication", action: "Review dose" }]
       : []),
     ...(!todayCheckIn?.movementMinutes && !todayCheckIn?.strengthTraining
-      ? [{ label: "Movement / strength", value: "Log movement or strength activity", status: "Planned", href: "/app/check-in" }]
+      ? [{ label: "Movement / strength", value: "Log movement or strength activity", status: "Planned", href: "/app/check-in", action: "Log movement" }]
       : []),
   ];
   const todayPlan = (
     generatedPlan.length
       ? generatedPlan
-      : [{ label: "Keep rhythm", value: "Protein, hydration, symptoms, and movement are logged today", status: "Done", href: "/app/check-in" }]
+      : [{ label: "Keep rhythm", value: "Protein, hydration, symptoms, and movement are logged today", status: "Done", href: "/app/check-in", action: "Open check-in" }]
   ).slice(0, 5);
   const metrics = [
     { label: "Weight", value: latestWeight ? `${latestWeight} lb` : "Start", helper: "latest logged", progress: 80, icon: CalendarCheck, color: "#0B1220" },
     { label: "Protein", value: `${todayProtein}g`, helper: `of ${patientProfile.proteinGoalGrams}g today`, progress: Math.min(100, Math.round((todayProtein / patientProfile.proteinGoalGrams) * 100)), icon: Utensils, color: "#16A34A" },
     { label: "Hydration", value: `${todayHydration}oz`, helper: `of ${patientProfile.hydrationGoalOz}oz today`, progress: Math.min(100, Math.round((todayHydration / patientProfile.hydrationGoalOz) * 100)), icon: Droplet, color: "#17C2B2" },
-    { label: "Energy", value: `${todayCheckIn?.energyLevel ?? "—"}`, helper: "latest 1-10 trend", progress: (todayCheckIn?.energyLevel ?? 0) * 10, icon: HeartPulse, color: "#17C2B2" },
+    { label: "Energy", value: `${todayCheckIn?.energyLevel ?? "-"}`, helper: "latest 1-10 trend", progress: (todayCheckIn?.energyLevel ?? 0) * 10, icon: HeartPulse, color: "#17C2B2" },
     { label: "Report", value: reportReady, helper: "clinic-ready", progress: reportReady === "Ready" ? 100 : 35, icon: FileText, color: "#0B1220" },
   ];
 
@@ -190,12 +258,24 @@ export default async function PatientDashboard() {
       <DashboardShell
         eyebrow="PATIENT DASHBOARD"
         title="Your GLP-1 plan for today."
-        description="You’re on track. Stay consistent."
-        action={<StatusBadge tone={doseRhythm.status === "Needs review" ? "coral" : doseRhythm.status === "Check in" ? "amber" : "green"}>{doseRhythm.status}</StatusBadge>}
+        description="You're on track. Stay consistent."
+        action={<StatusBadge tone={primaryStatus.tone as "green" | "amber" | "coral"}>{primaryStatus.label}</StatusBadge>}
         activePath="/app/dashboard"
       >
         <div className="grid gap-6 xl:grid-cols-[minmax(0,1.55fr)_minmax(360px,0.95fr)]">
           <main className="space-y-6">
+            {needsDoseAwareness ? (
+              <section className="rounded-[22px] border border-amber-200 bg-amber-50 p-5 text-amber-900 shadow-[0_12px_35px_rgba(146,64,14,0.08)]">
+                <div className="flex items-start gap-3">
+                  <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0" />
+                  <div>
+                    <p className="text-sm font-semibold">Dose timing needs a check-in</p>
+                    <p className="mt-1 text-sm leading-6 text-amber-800">{doseRhythm.explanation}</p>
+                  </div>
+                </div>
+              </section>
+            ) : null}
+
             <section className="relative overflow-hidden rounded-[28px] border border-[#E2E8F0]/80 bg-white p-8 shadow-[0_28px_80px_rgba(15,23,42,0.08)] before:pointer-events-none before:absolute before:inset-0 before:rounded-[28px] before:bg-gradient-to-b before:from-white before:to-transparent">
               <div className="relative z-10 flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
                 <div>
@@ -212,9 +292,8 @@ export default async function PatientDashboard() {
                   const style = taskStyles[item.status as keyof typeof taskStyles];
                   const Icon = style.icon;
                   return (
-                    <Link
+                    <div
                       key={item.label}
-                      href={item.href}
                       className={cn(
                         "group flex items-center justify-between gap-4 rounded-[18px] border px-4 py-4 transition-all duration-300 ease-out hover:-translate-y-px hover:bg-white hover:shadow-[0_14px_32px_rgba(15,23,42,0.07)]",
                         item.status === "Done" && "border-[#BBF7D0]/80 bg-[#F0FDF4]/70",
@@ -232,8 +311,13 @@ export default async function PatientDashboard() {
                           <p className="mt-1 text-sm leading-5 text-[#64748B]">{item.value}</p>
                         </div>
                       </div>
-                      <span className={cn("inline-flex items-center rounded-full border px-3 py-1 text-xs font-semibold", style.badge)}>{item.status}</span>
-                    </Link>
+                      <div className="flex shrink-0 items-center gap-2">
+                        <span className={cn("hidden items-center rounded-full border px-3 py-1 text-xs font-semibold sm:inline-flex", style.badge)}>{item.status}</span>
+                        <Link href={item.href} className="rounded-full bg-[#0B1220] px-3 py-2 text-xs font-semibold text-white transition hover:-translate-y-0.5 hover:shadow-[0_12px_24px_rgba(11,18,32,0.18)]">
+                          {item.action}
+                        </Link>
+                      </div>
+                    </div>
                   );
                 })}
               </div>
@@ -262,9 +346,9 @@ export default async function PatientDashboard() {
 
           <aside className="space-y-6">
             <section className="relative overflow-hidden rounded-[28px] border border-white/10 bg-[#0B1220] p-8 text-white shadow-[0_28px_80px_rgba(15,23,42,0.22)]">
-              <p className="text-xs font-bold uppercase tracking-[0.28em] text-[#7EE6D6]">Risk review</p>
-              <h2 className="mt-3 text-2xl font-semibold tracking-[-0.03em] text-white">{patientProfile.riskFlags.length ? "Flags need review" : "No active flags"}</h2>
-              <p className="mt-3 text-sm leading-6 text-slate-300">{muscleScore.explanation}</p>
+              <p className="text-xs font-bold uppercase tracking-[0.28em] text-[#7EE6D6]">Primary status</p>
+              <h2 className="mt-3 text-2xl font-semibold tracking-[-0.03em] text-white">{primaryStatus.title}</h2>
+              <p className="mt-3 text-sm leading-6 text-slate-300">{primaryStatus.explanation}</p>
               <div className="mt-8 flex items-center gap-5">
                 <div className="grid size-28 place-items-center rounded-full bg-white/8 text-center ring-1 ring-white/10">
                   <div>
@@ -273,9 +357,43 @@ export default async function PatientDashboard() {
                   </div>
                 </div>
                 <div>
-                  <p className="text-lg font-semibold">{muscleScore.label}</p>
-                  <p className="mt-2 text-sm text-slate-300">{doseRhythm.explanation}</p>
+                  <p className="text-lg font-semibold">{muscleScore.score} / 100</p>
+                  <p className="mt-2 text-sm text-slate-300">{muscleScore.label}</p>
                 </div>
+              </div>
+              <div className="mt-6 rounded-2xl bg-white/7 p-4 ring-1 ring-white/10">
+                <p className="text-sm font-semibold text-white">Why this score</p>
+                <p className="mt-2 text-sm leading-6 text-slate-300">{whyScore}</p>
+                <p className="mt-3 text-xs font-semibold uppercase tracking-[0.18em] text-[#7EE6D6]">Affected by</p>
+                <p className="mt-2 text-sm leading-6 text-slate-300">{scoreDrivers.join(", ")}.</p>
+              </div>
+            </section>
+
+            <section className="rounded-[22px] border border-[#E2E8F0]/80 bg-white p-6 shadow-[0_12px_35px_rgba(15,23,42,0.055)]">
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <div className="grid size-10 place-items-center rounded-2xl bg-teal-50 text-[#0F766E] ring-1 ring-teal-100">
+                    <Activity className="size-5" />
+                  </div>
+                  <h2 className="font-semibold tracking-tight text-[#0B1220]">3-day pattern</h2>
+                </div>
+                <StatusBadge tone={consistencySignal.tone}>{consistencySignal.label}</StatusBadge>
+              </div>
+              <p className="mt-3 text-sm leading-6 text-[#64748B]">{consistencySignal.helper}</p>
+              <div className="mt-5 grid gap-3">
+                {[
+                  { label: "Hydration", value: hydrationPattern.direction, helper: hydrationPattern.goalText },
+                  { label: "Protein", value: proteinPattern.direction, helper: proteinPattern.goalText },
+                  { label: "Symptoms", value: symptomPattern, helper: symptomBurden ? `${symptomBurden} day${symptomBurden === 1 ? "" : "s"} with moderate or severe symptoms` : "no moderate or severe symptoms logged" },
+                ].map((pattern) => (
+                  <div key={pattern.label} className="rounded-2xl border border-[#E2E8F0]/80 bg-[#F8FAFC]/75 p-4">
+                    <div className="flex items-center justify-between gap-3">
+                      <p className="text-sm font-semibold text-[#0B1220]">{pattern.label}</p>
+                      <p className="text-sm font-semibold text-[#0F766E]">{pattern.value}</p>
+                    </div>
+                    <p className="mt-1 text-sm text-[#64748B]">{pattern.helper}</p>
+                  </div>
+                ))}
               </div>
             </section>
 
@@ -288,10 +406,13 @@ export default async function PatientDashboard() {
               </div>
               <div className="mt-5 space-y-3">
                 {patientProfile.guidanceMessages.slice(0, 3).map((message) => (
-                  <div key={message.id} className="rounded-2xl bg-slate-50 p-4 text-sm text-slate-600">
-                    <p className="font-semibold text-[#0B1220]">{message.title}</p>
-                    <p className="mt-1 leading-6">{message.message}</p>
-                  </div>
+                  <details key={message.id} className="group rounded-2xl bg-slate-50 p-4 text-sm text-slate-600">
+                    <summary className="cursor-pointer list-none">
+                      <p className="font-semibold text-[#0B1220]">{message.title}</p>
+                      <p className="mt-1 leading-6">{guidancePreview(message.message)}</p>
+                    </summary>
+                    <p className="mt-3 border-t border-slate-200 pt-3 leading-6">{message.message}</p>
+                  </details>
                 ))}
                 {!patientProfile.guidanceMessages.length ? <p className="text-sm text-slate-500">Complete a check-in to generate daily guidance.</p> : null}
               </div>
