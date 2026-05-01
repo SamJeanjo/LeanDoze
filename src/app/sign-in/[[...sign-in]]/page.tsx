@@ -8,7 +8,7 @@ export default function SignInPage() {
         <div className="flex justify-center">
           <Logo variant="full" theme="light" size="md" priority />
         </div>
-        <SignIn />
+        <SignIn forceRedirectUrl="/app" fallbackRedirectUrl="/app" />
       </section>
     </main>
   );

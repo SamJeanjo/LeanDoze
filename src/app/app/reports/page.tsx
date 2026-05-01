@@ -1,5 +1,5 @@
 import { Download, FileText } from "lucide-react";
-import { DashboardShell, Footer } from "@/components/layout";
+import { PatientLayout } from "@/components/layout";
 import { StatusBadge } from "@/components/status-badge";
 import { generateDoctorReportAction } from "@/lib/app-actions";
 import { getPatientAppState, reportDisclaimer } from "@/lib/app-data";
@@ -27,7 +27,7 @@ export default async function DoctorReportsPage() {
 
   return (
     <div className="bg-[#F8FAFC] text-[#0B1220]">
-      <DashboardShell
+      <PatientLayout
         eyebrow="DOCTOR REPORT"
         title="Clinic-ready progress summary."
         description="Generate a clear report for your clinician with adherence, trends, symptoms, and safety flags."
@@ -123,8 +123,7 @@ export default async function DoctorReportsPage() {
             </div>
           </div>
         </section>
-      </DashboardShell>
-      <Footer />
+      </PatientLayout>
     </div>
   );
 }

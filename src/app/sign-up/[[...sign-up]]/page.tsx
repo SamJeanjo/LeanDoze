@@ -8,7 +8,7 @@ export default function SignUpPage() {
         <div className="flex justify-center">
           <Logo variant="full" theme="light" size="md" priority />
         </div>
-        <SignUp />
+        <SignUp forceRedirectUrl="/app" fallbackRedirectUrl="/app" />
       </section>
     </main>
   );

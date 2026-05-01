@@ -1,5 +1,5 @@
 import { AlertTriangle, Droplet, HeartPulse, Scale, Utensils } from "lucide-react";
-import { DashboardShell, Footer } from "@/components/layout";
+import { PatientLayout } from "@/components/layout";
 import { StatusBadge } from "@/components/status-badge";
 import { saveDailyCheckInAction } from "@/lib/app-actions";
 import { getPatientAppState } from "@/lib/app-data";
@@ -21,7 +21,7 @@ export default async function DailyCheckInPage() {
 
   return (
     <div className="bg-[#F8FAFC] text-[#0B1220]">
-      <DashboardShell
+      <PatientLayout
         eyebrow="DAILY CHECK-IN"
         title="Log today’s GLP-1 signals."
         description="Track weight, protein, hydration, symptoms, severity, and missed doses for clinic-ready pattern detection."
@@ -143,8 +143,7 @@ export default async function DailyCheckInPage() {
             </div>
           </section>
         </div>
-      </DashboardShell>
-      <Footer />
+      </PatientLayout>
     </div>
   );
 }

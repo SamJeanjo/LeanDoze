@@ -1,5 +1,5 @@
 import { Mail, ShieldCheck } from "lucide-react";
-import { DashboardShell, Footer } from "@/components/layout";
+import { PatientLayout } from "@/components/layout";
 import { StatusBadge } from "@/components/status-badge";
 import { inviteDoctorAction, revokePatientAccessAction } from "@/lib/app-actions";
 import { getPatientAppState } from "@/lib/app-data";
@@ -19,7 +19,7 @@ export default async function InviteDoctorPage() {
 
   return (
     <div>
-      <DashboardShell
+      <PatientLayout
         eyebrow="Invite Doctor"
         title="Share your LeanDoze progress securely."
         description="Invite a clinician or clinic by email. You stay in control and can revoke access at any time."
@@ -99,8 +99,7 @@ export default async function InviteDoctorPage() {
             </section>
           </aside>
         </div>
-      </DashboardShell>
-      <Footer />
+      </PatientLayout>
     </div>
   );
 }

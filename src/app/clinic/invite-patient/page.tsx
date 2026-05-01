@@ -1,5 +1,5 @@
 import { Mail, UsersRound } from "lucide-react";
-import { DashboardShell, Footer } from "@/components/layout";
+import { ClinicLayout } from "@/components/layout";
 import { StatusBadge } from "@/components/status-badge";
 import { invitePatientAction } from "@/lib/app-actions";
 import { getClinicAppState } from "@/lib/app-data";
@@ -18,7 +18,7 @@ export default async function InvitePatientPage() {
 
   return (
     <div>
-      <DashboardShell
+      <ClinicLayout
         eyebrow="Invite Patient"
         title="Connect a patient to your clinic."
         description="Patients must accept the invite before their dashboard, reports, or risk flags become visible."
@@ -65,8 +65,7 @@ export default async function InvitePatientPage() {
             </div>
           </aside>
         </div>
-      </DashboardShell>
-      <Footer />
+      </ClinicLayout>
     </div>
   );
 }

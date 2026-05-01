@@ -13,7 +13,7 @@ import {
   Dumbbell,
   Activity,
 } from "lucide-react";
-import { DashboardShell, Footer } from "@/components/layout";
+import { ClinicLayout, Footer, PatientLayout } from "@/components/layout";
 import { StatusBadge } from "@/components/status-badge";
 import { selectRoleAction } from "@/lib/app-actions";
 import { getPatientAppState } from "@/lib/app-data";
@@ -61,7 +61,7 @@ function guidancePreview(message: string) {
 
 function RoleSelection() {
   return (
-    <DashboardShell
+    <PatientLayout
       eyebrow="Welcome"
       title="Choose your LeanDoze workspace."
       description="Set up a patient profile or create a clinic/provider workspace. You can connect them later through secure invites."
@@ -100,7 +100,7 @@ function RoleSelection() {
           </button>
         </form>
       </div>
-    </DashboardShell>
+    </PatientLayout>
   );
 }
 
@@ -119,7 +119,7 @@ export default async function PatientDashboard() {
   if (!patientProfile) {
     return (
       <div className="bg-[#F8FAFC] text-[#0B1220]">
-        <DashboardShell
+        <ClinicLayout
           eyebrow="Clinic Workspace"
           title="Your provider workspace is ready."
           description="Use the clinic app to invite patients and review connected patient progress."
@@ -129,7 +129,7 @@ export default async function PatientDashboard() {
           <div className="rounded-[28px] border border-slate-200 bg-white p-8 shadow-sm">
             <p className="text-sm text-slate-600">Clinics cannot see patients until an accepted invite creates PatientAccess.</p>
           </div>
-        </DashboardShell>
+        </ClinicLayout>
         <Footer />
       </div>
     );
@@ -255,7 +255,7 @@ export default async function PatientDashboard() {
 
   return (
     <div className="bg-[#F8FAFC] text-[#0B1220]">
-      <DashboardShell
+      <PatientLayout
         eyebrow="PATIENT DASHBOARD"
         title="Your GLP-1 plan for today."
         description="You're on track. Stay consistent."
@@ -419,8 +419,7 @@ export default async function PatientDashboard() {
             </section>
           </aside>
         </div>
-      </DashboardShell>
-      <Footer />
+      </PatientLayout>
     </div>
   );
 }

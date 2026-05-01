@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Activity, AlertTriangle, CalendarCheck, UserPlus, UsersRound } from "lucide-react";
 import { MetricCard } from "@/components/cards";
-import { DashboardShell, Footer } from "@/components/layout";
+import { ClinicLayout } from "@/components/layout";
 import { StatusBadge } from "@/components/status-badge";
 import { getClinicAppState } from "@/lib/app-data";
 
@@ -15,13 +15,15 @@ export default async function ClinicDashboard() {
   const { clinic, patients } = await getClinicAppState();
   const alerts = patients.reduce((sum, patient) => sum + patient.riskFlags.length, 0);
   const missedDosePatients = patients.filter((patient) => patient.riskFlags.some((flag) => flag.source === "dose-log")).length;
+  const patientsNeedingAttention = patients.filter((patient) => patient.riskFlags.length > 0);
+  const stablePatients = patients.filter((patient) => patient.riskFlags.length === 0);
 
   return (
     <div>
-      <DashboardShell
+      <ClinicLayout
         eyebrow="Clinic Dashboard"
-        title={clinic ? `${clinic.name} patient monitoring.` : "Create your clinic workspace."}
-        description="Only patients who have granted access through LeanDoze PatientAccess appear here."
+        title={clinic ? `${clinic.name} attention queue.` : "Create your clinic workspace."}
+        description="Scan which connected patients need review. Only active PatientAccess records appear here."
         action={
           <Link href="/clinic/invite-patient" className="inline-flex h-11 items-center gap-2 rounded-full bg-[#0B1220] px-5 text-sm font-semibold text-white shadow-[0_18px_35px_rgba(11,18,32,0.18)] transition hover:-translate-y-0.5 hover:bg-slate-800">
             <UserPlus className="size-4" />
@@ -37,12 +39,12 @@ export default async function ClinicDashboard() {
           <MetricCard label="Visibility" value="Access" helper="PatientAccess enforced" progress={100} icon={Activity} tone="navy" />
         </div>
 
-        <section className="mt-6 rounded-[1.5rem] border border-slate-200 bg-white p-5 shadow-sm">
+        <section id="risk-flags" className="mt-6 rounded-[1.5rem] border border-slate-200 bg-white p-5 shadow-sm">
           <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
             <div>
-              <h2 className="text-xl font-semibold text-slate-950">Connected patient list</h2>
+              <h2 className="text-xl font-semibold text-slate-950">Patients needing attention ({patientsNeedingAttention.length})</h2>
               <p className="mt-1 text-sm text-slate-500">
-                Filtered by active PatientAccess. Revoked or unaccepted patients stay hidden.
+                Fast review queue based on open risk flags. Review with the patient or clinician team as appropriate.
               </p>
             </div>
             <Link href="/clinic/patients" className="rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-900 transition hover:-translate-y-0.5 hover:bg-slate-50">
@@ -50,39 +52,61 @@ export default async function ClinicDashboard() {
             </Link>
           </div>
           <div className="mt-5 grid gap-3">
-            {patients.slice(0, 4).map((patient) => {
+            {patientsNeedingAttention.slice(0, 5).map((patient) => {
               const plan = patient.medicationPlans[0];
-              const latestWeight = patient.weightLogs[0];
+              const flag = patient.riskFlags[0];
+              const latestCheckIn = patient.dailyCheckIns[0];
               return (
                 <Link key={patient.id} href={`/clinic/patients/${patient.id}`} className="grid gap-5 rounded-[1.25rem] border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg lg:grid-cols-[1.3fr_0.8fr_0.8fr_auto] lg:items-center">
                   <div>
                     <div className="flex flex-wrap items-center gap-3">
                       <h3 className="font-semibold text-slate-950">{patientName(patient)}</h3>
-                      <StatusBadge tone={patient.riskFlags.length ? "amber" : "green"}>{patient.riskFlags.length ? "Review" : "On track"}</StatusBadge>
+                      <StatusBadge tone={flag?.level === "URGENT" ? "coral" : "amber"}>{flag?.level ?? "Review"}</StatusBadge>
                     </div>
-                    <p className="mt-1 text-sm text-slate-500">{plan ? `${plan.medication} ${plan.doseMg}mg` : "No medication plan yet"}</p>
+                    <p className="mt-1 text-sm text-slate-500">{flag?.title ?? "Open review item"}</p>
                   </div>
                   <div>
-                    <p className="text-xs font-semibold uppercase text-slate-400">Weight</p>
-                    <p className="mt-1 font-semibold text-slate-900">{latestWeight ? `${latestWeight.weightLb} lb` : "No log"}</p>
+                    <p className="text-xs font-semibold uppercase text-slate-400">Plan</p>
+                    <p className="mt-1 font-semibold text-slate-900">{plan ? `${plan.medication} ${plan.doseMg}mg` : "No plan"}</p>
                   </div>
                   <div>
-                    <p className="text-xs font-semibold uppercase text-slate-400">Flags</p>
-                    <p className="mt-1 font-semibold text-slate-900">{patient.riskFlags.length}</p>
+                    <p className="text-xs font-semibold uppercase text-slate-400">Last check-in</p>
+                    <p className="mt-1 font-semibold text-slate-900">{latestCheckIn ? latestCheckIn.checkInDate.toLocaleDateString() : "No check-in"}</p>
                   </div>
                   <span className="inline-flex h-10 items-center justify-center rounded-full bg-slate-950 px-4 text-sm font-semibold text-white">View Patient</span>
                 </Link>
               );
             })}
-            {!patients.length ? (
+            {!patientsNeedingAttention.length ? (
               <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-8 text-sm text-slate-600">
-                No connected patients yet. Invite a patient to create PatientAccess.
+                No connected patients currently need attention.
               </div>
             ) : null}
           </div>
         </section>
-      </DashboardShell>
-      <Footer />
+
+        <section className="mt-6 rounded-[1.5rem] border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
+            <div>
+              <h2 className="text-xl font-semibold text-slate-950">Stable patients ({stablePatients.length})</h2>
+              <p className="mt-1 text-sm text-slate-500">Connected patients without open flags.</p>
+            </div>
+          </div>
+          <div className="mt-5 grid gap-3">
+            {stablePatients.slice(0, 6).map((patient) => (
+              <Link key={patient.id} href={`/clinic/patients/${patient.id}`} className="grid gap-4 rounded-2xl border border-slate-200 bg-slate-50 p-4 transition hover:-translate-y-0.5 hover:bg-white hover:shadow-sm md:grid-cols-[1fr_auto_auto] md:items-center">
+                <div>
+                  <p className="font-semibold text-slate-950">{patientName(patient)}</p>
+                  <p className="mt-1 text-sm text-slate-500">{patient.medicationPlans[0] ? `${patient.medicationPlans[0].medication} ${patient.medicationPlans[0].doseMg}mg` : "No medication plan yet"}</p>
+                </div>
+                <StatusBadge tone="green">Stable</StatusBadge>
+                <span className="text-sm font-semibold text-slate-700">Open</span>
+              </Link>
+            ))}
+            {!stablePatients.length ? <p className="text-sm text-slate-500">Stable patient list will populate as patients grant access.</p> : null}
+          </div>
+        </section>
+      </ClinicLayout>
     </div>
   );
 }

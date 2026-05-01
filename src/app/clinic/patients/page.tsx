@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { UserPlus } from "lucide-react";
-import { DashboardShell, Footer } from "@/components/layout";
+import { ClinicLayout } from "@/components/layout";
 import { StatusBadge } from "@/components/status-badge";
 import { getClinicAppState } from "@/lib/app-data";
 
@@ -15,7 +15,7 @@ export default async function ClinicPatientsPage() {
 
   return (
     <div>
-      <DashboardShell
+      <ClinicLayout
         eyebrow="Clinic Patients"
         title="Patients who granted access."
         description="Clinics only see patient records after an accepted invite creates PatientAccess."
@@ -38,19 +38,20 @@ export default async function ClinicPatientsPage() {
           <div className="mt-5 grid gap-3">
             {patients.map((patient) => {
               const plan = patient.medicationPlans[0];
-              const latestWeight = patient.weightLogs[0];
+              const latestCheckIn = patient.dailyCheckIns[0];
+              const primaryFlag = patient.riskFlags[0];
               return (
                 <Link key={patient.id} href={`/clinic/patients/${patient.id}`} className="grid gap-5 rounded-[1.25rem] border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg lg:grid-cols-[1.3fr_0.8fr_0.8fr_auto] lg:items-center">
                   <div>
                     <div className="flex flex-wrap items-center gap-3">
                       <h3 className="font-semibold text-slate-950">{patientName(patient)}</h3>
-                      <StatusBadge tone={patient.riskFlags.length ? "amber" : "green"}>{patient.riskFlags.length ? "Review" : "On track"}</StatusBadge>
+                      <StatusBadge tone={primaryFlag?.level === "URGENT" ? "coral" : patient.riskFlags.length ? "amber" : "green"}>{patient.riskFlags.length ? "Needs review" : "Stable"}</StatusBadge>
                     </div>
-                    <p className="mt-1 text-sm text-slate-500">{plan ? `${plan.medication} ${plan.doseMg}mg` : "No medication plan yet"}</p>
+                    <p className="mt-1 text-sm text-slate-500">{primaryFlag?.title ?? (plan ? `${plan.medication} ${plan.doseMg}mg` : "No medication plan yet")}</p>
                   </div>
                   <div>
-                    <p className="text-xs font-semibold uppercase text-slate-400">Weight</p>
-                    <p className="mt-1 font-semibold text-slate-900">{latestWeight ? `${latestWeight.weightLb} lb` : "No log"}</p>
+                    <p className="text-xs font-semibold uppercase text-slate-400">Last check-in</p>
+                    <p className="mt-1 font-semibold text-slate-900">{latestCheckIn ? latestCheckIn.checkInDate.toLocaleDateString() : "No check-in"}</p>
                   </div>
                   <div>
                     <p className="text-xs font-semibold uppercase text-slate-400">Flags</p>
@@ -67,8 +68,7 @@ export default async function ClinicPatientsPage() {
             ) : null}
           </div>
         </section>
-      </DashboardShell>
-      <Footer />
+      </ClinicLayout>
     </div>
   );
 }

@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { Download, MessageSquareText } from "lucide-react";
 import { MetricCard } from "@/components/cards";
-import { DashboardShell, Footer } from "@/components/layout";
+import { ClinicLayout } from "@/components/layout";
 import { ProgressBar } from "@/components/progress";
 import { StatusBadge } from "@/components/status-badge";
 import { getClinicPatient } from "@/lib/app-data";
@@ -32,7 +32,7 @@ export default async function PatientDetail({ params }: { params: { id: string }
 
   return (
     <div>
-      <DashboardShell
+      <ClinicLayout
         eyebrow="Patient Detail"
         title={patientName(patient)}
         description={`${plan ? `${plan.medication} ${plan.doseMg}mg` : "No active medication plan"}. Clinics see this only because active PatientAccess exists.`}
@@ -115,8 +115,7 @@ export default async function PatientDetail({ params }: { params: { id: string }
             </div>
           </section>
         </div>
-      </DashboardShell>
-      <Footer />
+      </ClinicLayout>
     </div>
   );
 }

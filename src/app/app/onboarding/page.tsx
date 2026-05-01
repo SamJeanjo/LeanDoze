@@ -1,4 +1,4 @@
-import { DashboardShell, Footer } from "@/components/layout";
+import { PatientLayout } from "@/components/layout";
 import { StatusBadge } from "@/components/status-badge";
 import { savePatientOnboardingAction } from "@/lib/app-actions";
 
@@ -16,7 +16,7 @@ const concerns = [
 export default function PatientOnboardingPage() {
   return (
     <div className="bg-[#F8FAFC] text-[#0B1220]">
-      <DashboardShell
+      <PatientLayout
         eyebrow="Patient Onboarding"
         title="Set your GLP-1 support baseline."
         description="Create a patient-owned profile for daily goals, dose rhythm, and clinic-ready reports."
@@ -89,8 +89,7 @@ export default function PatientOnboardingPage() {
             Create my plan
           </button>
         </form>
-      </DashboardShell>
-      <Footer />
+      </PatientLayout>
     </div>
   );
 }
