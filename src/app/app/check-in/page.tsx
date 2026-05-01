@@ -1,16 +1,23 @@
 import { AlertTriangle, Droplet, HeartPulse, Scale, Utensils } from "lucide-react";
 import { DashboardShell, Footer } from "@/components/layout";
 import { StatusBadge } from "@/components/status-badge";
-import { demoSafetyFlags } from "@/lib/safety";
+import { saveDailyCheckInAction } from "@/lib/app-actions";
+import { getPatientAppState } from "@/lib/app-data";
 
-const fields = [
-  { label: "Weight", placeholder: "182.4 lb", icon: Scale },
-  { label: "Protein", placeholder: "92g", icon: Utensils },
-  { label: "Hydration", placeholder: "68 oz", icon: Droplet },
-  { label: "Symptoms", placeholder: "Nausea, constipation, reflux", icon: HeartPulse },
+export const dynamic = "force-dynamic";
+
+const symptoms = [
+  ["nausea", "Nausea"],
+  ["constipation", "Constipation"],
+  ["reflux", "Reflux"],
+  ["fatigue", "Fatigue"],
+  ["vomiting", "Vomiting"],
+  ["abdominalPain", "Abdominal pain"],
 ];
 
-export default function DailyCheckInPage() {
+export default async function DailyCheckInPage() {
+  const { patientProfile } = await getPatientAppState();
+
   return (
     <div className="bg-[#F8FAFC] text-[#0B1220]">
       <DashboardShell
@@ -18,48 +25,80 @@ export default function DailyCheckInPage() {
         title="Log today’s GLP-1 signals."
         description="Track weight, protein, hydration, symptoms, severity, and missed doses for clinic-ready pattern detection."
         action={<StatusBadge tone="mint">Review this with your clinician.</StatusBadge>}
-        activePath="/app"
+        activePath="/app/check-in"
       >
         <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
-          <form className="rounded-[28px] border border-[#E2E8F0]/80 bg-white p-8 shadow-[0_28px_80px_rgba(15,23,42,0.08)]">
+          <form action={saveDailyCheckInAction} className="rounded-[28px] border border-[#E2E8F0]/80 bg-white p-8 shadow-[0_28px_80px_rgba(15,23,42,0.08)]">
             <div className="grid gap-4 sm:grid-cols-2">
-              {fields.map((field) => (
-                <label key={field.label}>
-                  <span className="flex items-center gap-2 text-sm font-semibold text-[#0B1220]">
-                    <field.icon className="h-4 w-4 text-[#0F766E]" />
-                    {field.label}
-                  </span>
-                  <input
-                    className="mt-2 h-12 w-full rounded-2xl border border-[#E2E8F0] bg-[#F8FAFC] px-4 text-sm outline-none transition focus:border-[#17C2B2] focus:bg-white focus:ring-4 focus:ring-teal-100"
-                    placeholder={field.placeholder}
-                  />
-                </label>
-              ))}
               <label>
-                <span className="text-sm font-semibold text-[#0B1220]">Side effect severity</span>
-                <select className="mt-2 h-12 w-full rounded-2xl border border-[#E2E8F0] bg-[#F8FAFC] px-4 text-sm outline-none transition focus:border-[#17C2B2] focus:bg-white focus:ring-4 focus:ring-teal-100">
-                  <option>None</option>
-                  <option>Mild</option>
-                  <option>Moderate</option>
-                  <option>Severe</option>
-                </select>
+                <span className="flex items-center gap-2 text-sm font-semibold text-[#0B1220]">
+                  <Scale className="h-4 w-4 text-[#0F766E]" />
+                  Weight
+                </span>
+                <input name="weightLb" type="number" step="0.1" className="mt-2 h-12 w-full rounded-2xl border border-[#E2E8F0] bg-[#F8FAFC] px-4 text-sm outline-none transition focus:border-[#17C2B2] focus:bg-white focus:ring-4 focus:ring-teal-100" placeholder="182.4" required />
+              </label>
+              <label>
+                <span className="flex items-center gap-2 text-sm font-semibold text-[#0B1220]">
+                  <Utensils className="h-4 w-4 text-[#0F766E]" />
+                  Protein grams
+                </span>
+                <input name="proteinGrams" type="number" className="mt-2 h-12 w-full rounded-2xl border border-[#E2E8F0] bg-[#F8FAFC] px-4 text-sm outline-none transition focus:border-[#17C2B2] focus:bg-white focus:ring-4 focus:ring-teal-100" placeholder="92" required />
+              </label>
+              <label>
+                <span className="flex items-center gap-2 text-sm font-semibold text-[#0B1220]">
+                  <Droplet className="h-4 w-4 text-[#0F766E]" />
+                  Hydration ounces
+                </span>
+                <input name="hydrationOz" type="number" className="mt-2 h-12 w-full rounded-2xl border border-[#E2E8F0] bg-[#F8FAFC] px-4 text-sm outline-none transition focus:border-[#17C2B2] focus:bg-white focus:ring-4 focus:ring-teal-100" placeholder="68" required />
               </label>
               <label>
                 <span className="text-sm font-semibold text-[#0B1220]">Dose status</span>
-                <select className="mt-2 h-12 w-full rounded-2xl border border-[#E2E8F0] bg-[#F8FAFC] px-4 text-sm outline-none transition focus:border-[#17C2B2] focus:bg-white focus:ring-4 focus:ring-teal-100">
-                  <option>On schedule</option>
-                  <option>Taken</option>
-                  <option>Missed</option>
-                  <option>Skipped by clinician</option>
+                <select name="doseStatus" className="mt-2 h-12 w-full rounded-2xl border border-[#E2E8F0] bg-[#F8FAFC] px-4 text-sm outline-none transition focus:border-[#17C2B2] focus:bg-white focus:ring-4 focus:ring-teal-100">
+                  <option value="on-schedule">On schedule</option>
+                  <option value="taken">Taken</option>
+                  <option value="missed">Missed</option>
                 </select>
               </label>
+              <label>
+                <span className="text-sm font-semibold text-[#0B1220]">Energy level</span>
+                <input name="energyLevel" type="number" min="1" max="10" defaultValue="7" className="mt-2 h-12 w-full rounded-2xl border border-[#E2E8F0] bg-[#F8FAFC] px-4 text-sm outline-none transition focus:border-[#17C2B2] focus:bg-white focus:ring-4 focus:ring-teal-100" />
+              </label>
+              <label>
+                <span className="text-sm font-semibold text-[#0B1220]">Appetite level</span>
+                <input name="appetiteLevel" type="number" min="1" max="10" defaultValue="5" className="mt-2 h-12 w-full rounded-2xl border border-[#E2E8F0] bg-[#F8FAFC] px-4 text-sm outline-none transition focus:border-[#17C2B2] focus:bg-white focus:ring-4 focus:ring-teal-100" />
+              </label>
+              <label>
+                <span className="text-sm font-semibold text-[#0B1220]">Mood level</span>
+                <input name="moodLevel" type="number" min="1" max="10" defaultValue="7" className="mt-2 h-12 w-full rounded-2xl border border-[#E2E8F0] bg-[#F8FAFC] px-4 text-sm outline-none transition focus:border-[#17C2B2] focus:bg-white focus:ring-4 focus:ring-teal-100" />
+              </label>
             </div>
+
+            <div className="mt-6 rounded-[24px] border border-[#E2E8F0]/80 bg-[#F8FAFC]/75 p-5">
+              <div className="flex items-center gap-2">
+                <HeartPulse className="h-4 w-4 text-[#0F766E]" />
+                <h2 className="font-semibold text-[#0B1220]">Symptoms</h2>
+              </div>
+              <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                {symptoms.map(([value, label]) => (
+                  <div key={value} className="rounded-2xl border border-slate-200 bg-white p-4">
+                    <label className="flex items-center gap-3 text-sm font-semibold text-slate-800">
+                      <input type="checkbox" name="symptoms" value={value} className="size-4 accent-[#17C2B2]" />
+                      {label}
+                    </label>
+                    <select name={`${value}Severity`} defaultValue="MILD" className="mt-3 h-10 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm outline-none focus:border-teal-300">
+                      <option value="NONE">None</option>
+                      <option value="MILD">Mild</option>
+                      <option value="MODERATE">Moderate</option>
+                      <option value="SEVERE">Severe</option>
+                    </select>
+                  </div>
+                ))}
+              </div>
+            </div>
+
             <label className="mt-4 block">
               <span className="text-sm font-semibold text-[#0B1220]">Notes for your next visit</span>
-              <textarea
-                className="mt-2 min-h-32 w-full rounded-2xl border border-[#E2E8F0] bg-[#F8FAFC] p-4 text-sm outline-none transition focus:border-[#17C2B2] focus:bg-white focus:ring-4 focus:ring-teal-100"
-                placeholder="What changed today?"
-              />
+              <textarea name="notes" className="mt-2 min-h-32 w-full rounded-2xl border border-[#E2E8F0] bg-[#F8FAFC] p-4 text-sm outline-none transition focus:border-[#17C2B2] focus:bg-white focus:ring-4 focus:ring-teal-100" placeholder="What changed today?" />
             </label>
             <button className="mt-6 h-12 rounded-full bg-[#0B1220] px-6 text-sm font-semibold text-white shadow-[0_18px_35px_rgba(11,18,32,0.18)] transition hover:-translate-y-0.5">
               Save check-in
@@ -77,16 +116,17 @@ export default function DailyCheckInPage() {
               </div>
             </div>
             <div className="mt-6 space-y-3">
-              {demoSafetyFlags.slice(0, 3).map((flag) => (
-                <div key={flag.type} className="rounded-[18px] border border-[#E2E8F0]/80 bg-[#F8FAFC]/75 p-4">
+              {(patientProfile?.riskFlags ?? []).slice(0, 4).map((flag) => (
+                <div key={flag.id} className="rounded-[18px] border border-[#E2E8F0]/80 bg-[#F8FAFC]/75 p-4">
                   <div className="flex items-center justify-between gap-3">
                     <p className="font-semibold tracking-[-0.015em] text-[#0B1220]">{flag.title}</p>
-                    <StatusBadge tone={flag.severity === "URGENT" ? "coral" : "amber"}>{flag.severity}</StatusBadge>
+                    <StatusBadge tone={flag.level === "URGENT" ? "coral" : "amber"}>{flag.level}</StatusBadge>
                   </div>
-                  <p className="mt-2 text-sm leading-6 text-[#64748B]">{flag.summary}</p>
-                  <p className="mt-3 text-sm font-semibold text-[#0F766E]">{flag.recommendation}</p>
+                  <p className="mt-2 text-sm leading-6 text-[#64748B]">{flag.description}</p>
+                  <p className="mt-3 text-sm font-semibold text-[#0F766E]">{flag.recommendation ?? "Review this with your clinician."}</p>
                 </div>
               ))}
+              {!patientProfile?.riskFlags.length ? <p className="text-sm leading-6 text-slate-500">No active flags yet. LeanDoze will surface patterns here after check-ins.</p> : null}
             </div>
           </section>
         </div>

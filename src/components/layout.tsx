@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { BarChart3, CreditCard, LayoutDashboard, Menu, UsersRound } from "lucide-react";
+import { BarChart3, CreditCard, FilePlus2, LayoutDashboard, Menu, UserPlus, UsersRound } from "lucide-react";
 import { Logo } from "@/components/brand/Logo";
 import { disclaimer } from "@/lib/utils";
 
@@ -10,8 +10,10 @@ const navItems = [
 ];
 
 const dashboardItems = [
-  { href: "/app", label: "Patient", icon: LayoutDashboard },
-  { href: "/clinic", label: "Clinic", icon: UsersRound },
+  { href: "/app/dashboard", label: "Patient", icon: LayoutDashboard },
+  { href: "/app/invite-doctor", label: "Invite doctor", icon: UserPlus },
+  { href: "/clinic/dashboard", label: "Clinic", icon: UsersRound },
+  { href: "/clinic/invite-patient", label: "Invite patient", icon: FilePlus2 },
   { href: "/pricing", label: "Pricing", icon: CreditCard },
 ];
 
@@ -87,6 +89,18 @@ export function DashboardShell({
   action?: React.ReactNode;
   activePath?: string;
 }) {
+  const isActiveItem = (href: string) => {
+    if (!activePath) {
+      return false;
+    }
+
+    if (href === "/clinic/dashboard") {
+      return activePath.startsWith("/clinic");
+    }
+
+    return activePath === href || activePath.startsWith(`${href}/`);
+  };
+
   return (
     <div className="min-h-screen bg-slate-50">
       <Navbar />
@@ -107,7 +121,7 @@ export function DashboardShell({
                   href={item.href}
                   aria-label={item.label}
                   className={
-                    item.href === activePath
+                    isActiveItem(item.href)
                       ? "flex h-11 w-11 items-center justify-center rounded-2xl bg-[#ECFEFF] text-[#0F766E] shadow-[0_0_0_1px_rgba(23,194,178,0.18),0_12px_24px_rgba(23,194,178,0.16)] transition-all duration-300"
                       : "flex h-11 w-11 items-center justify-center rounded-2xl text-[#64748B] transition-all duration-300 hover:bg-[#F8FAFC] hover:text-[#0B1220]"
                   }

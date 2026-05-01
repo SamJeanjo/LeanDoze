@@ -49,8 +49,26 @@ enum RiskFlagStatus {
   RESOLVED
 }
 
+enum InviteType {
+  PATIENT_TO_CLINIC
+  CLINIC_TO_PATIENT
+}
+
+enum InviteStatus {
+  PENDING
+  ACCEPTED
+  EXPIRED
+  REVOKED
+}
+
+enum PatientAccessRole {
+  VIEWER
+  CLINICIAN
+  ADMIN
+}
+
 model User {
-  id        String   @id
+  id        String   @id // Clerk userId
   email     String   @unique
   firstName String?
   lastName  String?
@@ -58,6 +76,7 @@ model User {
 
   patientProfile PatientProfile?
   memberships    ClinicMembership[]
+  sentInvites    PatientInvite[]    @relation("InviteSender")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -73,6 +92,8 @@ model Clinic {
 
   memberships ClinicMembership[]
   patients    PatientProfile[]
+  invites     PatientInvite[]
+  access      PatientAccess[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -104,11 +125,13 @@ model PatientProfile {
   clinicId String?
   clinic   Clinic? @relation(fields: [clinicId], references: [id], onDelete: SetNull)
 
-  dateOfBirth  DateTime?
-  sex          String?
-  heightCm     Float?
-  startWeightLb Float?
-  goalWeightLb  Float?
+  dateOfBirth      DateTime?
+  sex              String?
+  heightCm         Float?
+  startWeightLb    Float?
+  goalWeightLb     Float?
+  proteinGoalGrams Int       @default(120)
+  hydrationGoalOz  Int       @default(90)
 
   medicationPlans MedicationPlan[]
   doseLogs        DoseLog[]
@@ -119,6 +142,8 @@ model PatientProfile {
   symptomLogs     SymptomLog[]
   riskFlags       RiskFlag[]
   doctorReports   DoctorReport[]
+  invites         PatientInvite[]
+  accessGrants    PatientAccess[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -135,7 +160,7 @@ model MedicationPlan {
   medication MedicationName
   customName String?
   doseMg     Float
-  frequency  DoseFrequency @default(WEEKLY)
+  frequency  DoseFrequency  @default(WEEKLY)
 
   startDate    DateTime
   nextDoseDate DateTime?
@@ -164,8 +189,8 @@ model DoseLog {
   scheduledDate DateTime
   takenDate     DateTime?
   doseMg        Float
-  taken         Boolean  @default(false)
-  missed        Boolean  @default(false)
+  taken         Boolean   @default(false)
+  missed        Boolean   @default(false)
 
   notes String?
 
@@ -183,9 +208,9 @@ model DailyCheckIn {
   patient   PatientProfile @relation(fields: [patientId], references: [id], onDelete: Cascade)
 
   checkInDate   DateTime
-  appetiteLevel Int?
-  energyLevel   Int?
-  moodLevel     Int?
+  appetiteLevel Int? // 1-10
+  energyLevel   Int? // 1-10
+  moodLevel     Int? // 1-10
 
   notes String?
 
@@ -280,7 +305,7 @@ model RiskFlag {
   description    String
   recommendation String?
 
-  source String?
+  source String? // example: "symptom-log", "hydration-log", "dose-log"
 
   createdAt  DateTime  @default(now())
   reviewedAt DateTime?
@@ -308,4 +333,59 @@ model DoctorReport {
 
   @@index([patientId])
   @@index([createdAt])
+}
+
+model PatientInvite {
+  id String @id @default(cuid())
+
+  type   InviteType
+  status InviteStatus @default(PENDING)
+
+  token String @unique
+  email String
+
+  patientId String?
+  patient   PatientProfile? @relation(fields: [patientId], references: [id], onDelete: Cascade)
+
+  clinicId String?
+  clinic   Clinic? @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+
+  invitedByUserId String?
+  invitedBy       User?   @relation("InviteSender", fields: [invitedByUserId], references: [id], onDelete: SetNull)
+
+  expiresAt  DateTime
+  acceptedAt DateTime?
+  revokedAt  DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([email])
+  @@index([token])
+  @@index([patientId])
+  @@index([clinicId])
+  @@index([status])
+}
+
+model PatientAccess {
+  id String @id @default(cuid())
+
+  patientId String
+  patient   PatientProfile @relation(fields: [patientId], references: [id], onDelete: Cascade)
+
+  clinicId String
+  clinic   Clinic @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+
+  role              PatientAccessRole @default(CLINICIAN)
+  grantedByInviteId String?
+
+  revokedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([patientId, clinicId])
+  @@index([patientId])
+  @@index([clinicId])
+  @@index([revokedAt])
 }
