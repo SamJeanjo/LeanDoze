@@ -8,10 +8,11 @@ export const dynamic = "force-dynamic";
 
 const symptoms = [
   ["nausea", "Nausea"],
+  ["vomiting", "Vomiting"],
   ["constipation", "Constipation"],
+  ["diarrhea", "Diarrhea"],
   ["reflux", "Reflux"],
   ["fatigue", "Fatigue"],
-  ["vomiting", "Vomiting"],
   ["abdominalPain", "Abdominal pain"],
 ];
 
@@ -35,7 +36,7 @@ export default async function DailyCheckInPage() {
                   <Scale className="h-4 w-4 text-[#0F766E]" />
                   Weight
                 </span>
-                <input name="weightLb" type="number" step="0.1" className="mt-2 h-12 w-full rounded-2xl border border-[#E2E8F0] bg-[#F8FAFC] px-4 text-sm outline-none transition focus:border-[#17C2B2] focus:bg-white focus:ring-4 focus:ring-teal-100" placeholder="182.4" required />
+                <input name="weightLb" type="number" step="0.1" className="mt-2 h-12 w-full rounded-2xl border border-[#E2E8F0] bg-[#F8FAFC] px-4 text-sm outline-none transition focus:border-[#17C2B2] focus:bg-white focus:ring-4 focus:ring-teal-100" placeholder="182.4" />
               </label>
               <label>
                 <span className="flex items-center gap-2 text-sm font-semibold text-[#0B1220]">
@@ -70,6 +71,18 @@ export default async function DailyCheckInPage() {
               <label>
                 <span className="text-sm font-semibold text-[#0B1220]">Mood level</span>
                 <input name="moodLevel" type="number" min="1" max="10" defaultValue="7" className="mt-2 h-12 w-full rounded-2xl border border-[#E2E8F0] bg-[#F8FAFC] px-4 text-sm outline-none transition focus:border-[#17C2B2] focus:bg-white focus:ring-4 focus:ring-teal-100" />
+              </label>
+              <label>
+                <span className="text-sm font-semibold text-[#0B1220]">Movement minutes</span>
+                <input name="movementMinutes" type="number" min="0" defaultValue="0" className="mt-2 h-12 w-full rounded-2xl border border-[#E2E8F0] bg-[#F8FAFC] px-4 text-sm outline-none transition focus:border-[#17C2B2] focus:bg-white focus:ring-4 focus:ring-teal-100" />
+              </label>
+              <label className="flex items-center gap-3 rounded-2xl border border-[#E2E8F0] bg-[#F8FAFC] px-4 py-3 text-sm font-semibold text-[#0B1220]">
+                <input name="strengthTraining" type="checkbox" className="size-4 accent-[#17C2B2]" />
+                Strength training today
+              </label>
+              <label className="flex items-center gap-3 rounded-2xl border border-[#E2E8F0] bg-[#F8FAFC] px-4 py-3 text-sm font-semibold text-[#0B1220]">
+                <input name="bowelMovement" type="checkbox" className="size-4 accent-[#17C2B2]" />
+                Bowel movement today
               </label>
             </div>
 

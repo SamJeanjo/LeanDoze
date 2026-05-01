@@ -8,13 +8,14 @@ import {
   FileText,
   HeartPulse,
   Plus,
-  ShieldPlus,
   Utensils,
+  Dumbbell,
 } from "lucide-react";
 import { DashboardShell, Footer } from "@/components/layout";
 import { StatusBadge } from "@/components/status-badge";
 import { selectRoleAction } from "@/lib/app-actions";
 import { getPatientAppState } from "@/lib/app-data";
+import { calculateDoseRhythmStatus, calculateMuscleProtectionScore } from "@/lib/scores";
 import { cn } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
@@ -41,14 +42,6 @@ const taskStyles = {
     iconBox: "bg-white border-[#CBD5E1] text-[#475569]",
   },
 };
-
-function average(values: number[]) {
-  if (!values.length) {
-    return 0;
-  }
-
-  return Math.round(values.reduce((sum, value) => sum + value, 0) / values.length);
-}
 
 function RoleSelection() {
   return (
@@ -127,20 +120,68 @@ export default async function PatientDashboard() {
   }
 
   const plan = patientProfile.medicationPlans[0];
+  const today = new Date(new Date().toDateString());
   const latestWeight = patientProfile.weightLogs[0]?.weightLb ?? patientProfile.startWeightLb ?? 0;
-  const proteinAvg = average(patientProfile.nutritionLogs.map((log) => log.proteinGrams ?? 0));
-  const hydrationAvg = average(patientProfile.hydrationLogs.map((log) => log.ounces));
+  const todayProtein = patientProfile.nutritionLogs.find((log) => log.loggedAt >= today)?.proteinGrams ?? 0;
+  const todayHydration = patientProfile.hydrationLogs.find((log) => log.loggedAt >= today)?.ounces ?? 0;
+  const todaySymptoms = patientProfile.symptomLogs.find((log) => log.loggedAt >= today);
+  const todayCheckIn = patientProfile.dailyCheckIns.find((log) => log.checkInDate >= today);
+  const proteinValues = patientProfile.nutritionLogs.map((log) => log.proteinGrams ?? 0);
+  const hydrationValues = patientProfile.hydrationLogs.map((log) => log.ounces);
   const reportReady = patientProfile.doctorReports[0] ? "Ready" : "Generate";
-  const todayPlan = [
-    { label: "Medication plan", value: plan ? `${plan.medication} ${plan.doseMg}mg` : "Set up your GLP-1 plan", status: plan ? "Done" : "Due", href: "/app/medication" },
-    { label: "Daily check-in", value: "Weight, protein, hydration, symptoms", status: "Log", href: "/app/check-in" },
-    { label: "Doctor report", value: "7 or 30 day clinic-ready summary", status: reportReady === "Ready" ? "Done" : "Planned", href: "/app/reports" },
-    { label: "Invite doctor", value: "Share access by secure email invite", status: patientProfile.accessGrants.length ? "Done" : "Planned", href: "/app/invite-doctor" },
+  const isDoseDay = plan?.nextDoseDate ? new Date(plan.nextDoseDate.toDateString()).getTime() === today.getTime() : false;
+  const muscleScore = calculateMuscleProtectionScore({
+    proteinGoal: patientProfile.proteinGoalGrams,
+    hydrationGoal: patientProfile.hydrationGoalOz,
+    proteinLast7: proteinValues,
+    hydrationLast7: hydrationValues,
+    movementMinutesLast7: patientProfile.dailyCheckIns.map((checkIn) => checkIn.movementMinutes ?? 0),
+    strengthTrainingDaysLast7: patientProfile.dailyCheckIns.filter((checkIn) => checkIn.strengthTraining).length,
+    weightChangePercentPerWeek:
+      patientProfile.weightLogs[0]?.weightLb && patientProfile.weightLogs[6]?.weightLb
+        ? ((patientProfile.weightLogs[6].weightLb - patientProfile.weightLogs[0].weightLb) / patientProfile.weightLogs[6].weightLb) * 100
+        : undefined,
+    energyLast7: patientProfile.dailyCheckIns.map((checkIn) => checkIn.energyLevel ?? 0),
+  });
+  const doseRhythm = calculateDoseRhythmStatus({
+    nextDoseDate: plan?.nextDoseDate,
+    symptomsLast3: patientProfile.symptomLogs.slice(0, 3).map((log) => ({
+      nausea: log.nausea,
+      vomiting: log.vomiting,
+      abdominalPain: log.abdominalPain,
+    })),
+    hydrationLast3: hydrationValues.slice(0, 3),
+    proteinLast3: proteinValues.slice(0, 3),
+    hydrationGoal: patientProfile.hydrationGoalOz,
+    proteinGoal: patientProfile.proteinGoalGrams,
+  });
+  const generatedPlan = [
+    ...(todayProtein < patientProfile.proteinGoalGrams
+      ? [{ label: "Protein anchor", value: `${todayProtein}g of ${patientProfile.proteinGoalGrams}g logged`, status: "Due", href: "/app/check-in" }]
+      : []),
+    ...(todayHydration < patientProfile.hydrationGoalOz
+      ? [{ label: "Hydration target", value: `${todayHydration}oz of ${patientProfile.hydrationGoalOz}oz logged`, status: "Due", href: "/app/check-in" }]
+      : []),
+    ...(!todaySymptoms
+      ? [{ label: "Symptom check", value: "Nausea, reflux, fatigue, abdominal pain", status: "Log", href: "/app/check-in" }]
+      : []),
+    ...(isDoseDay
+      ? [{ label: "Dose reminder", value: `${plan?.medication} ${plan?.doseMg}mg scheduled today`, status: "Planned", href: "/app/medication" }]
+      : []),
+    ...(!todayCheckIn?.movementMinutes && !todayCheckIn?.strengthTraining
+      ? [{ label: "Movement / strength", value: "Log movement or strength activity", status: "Planned", href: "/app/check-in" }]
+      : []),
   ];
+  const todayPlan = (
+    generatedPlan.length
+      ? generatedPlan
+      : [{ label: "Keep rhythm", value: "Protein, hydration, symptoms, and movement are logged today", status: "Done", href: "/app/check-in" }]
+  ).slice(0, 5);
   const metrics = [
     { label: "Weight", value: latestWeight ? `${latestWeight} lb` : "Start", helper: "latest logged", progress: 80, icon: CalendarCheck, color: "#0B1220" },
-    { label: "Protein", value: `${proteinAvg}g`, helper: `goal ${patientProfile.proteinGoalGrams}g`, progress: Math.min(100, Math.round((proteinAvg / patientProfile.proteinGoalGrams) * 100)), icon: Utensils, color: "#16A34A" },
-    { label: "Hydration", value: `${hydrationAvg}oz`, helper: `goal ${patientProfile.hydrationGoalOz}oz`, progress: Math.min(100, Math.round((hydrationAvg / patientProfile.hydrationGoalOz) * 100)), icon: Droplet, color: "#17C2B2" },
+    { label: "Protein", value: `${todayProtein}g`, helper: `of ${patientProfile.proteinGoalGrams}g today`, progress: Math.min(100, Math.round((todayProtein / patientProfile.proteinGoalGrams) * 100)), icon: Utensils, color: "#16A34A" },
+    { label: "Hydration", value: `${todayHydration}oz`, helper: `of ${patientProfile.hydrationGoalOz}oz today`, progress: Math.min(100, Math.round((todayHydration / patientProfile.hydrationGoalOz) * 100)), icon: Droplet, color: "#17C2B2" },
+    { label: "Energy", value: `${todayCheckIn?.energyLevel ?? "—"}`, helper: "latest 1-10 trend", progress: (todayCheckIn?.energyLevel ?? 0) * 10, icon: HeartPulse, color: "#17C2B2" },
     { label: "Report", value: reportReady, helper: "clinic-ready", progress: reportReady === "Ready" ? 100 : 35, icon: FileText, color: "#0B1220" },
   ];
 
@@ -150,7 +191,7 @@ export default async function PatientDashboard() {
         eyebrow="PATIENT DASHBOARD"
         title="Your GLP-1 plan for today."
         description="You’re on track. Stay consistent."
-        action={<StatusBadge tone={patientProfile.riskFlags.length ? "amber" : "green"}>{patientProfile.riskFlags.length ? "Review flags" : "On track"}</StatusBadge>}
+        action={<StatusBadge tone={doseRhythm.status === "Needs review" ? "coral" : doseRhythm.status === "Check in" ? "amber" : "green"}>{doseRhythm.status}</StatusBadge>}
         activePath="/app/dashboard"
       >
         <div className="grid gap-6 xl:grid-cols-[minmax(0,1.55fr)_minmax(360px,0.95fr)]">
@@ -223,35 +264,36 @@ export default async function PatientDashboard() {
             <section className="relative overflow-hidden rounded-[28px] border border-white/10 bg-[#0B1220] p-8 text-white shadow-[0_28px_80px_rgba(15,23,42,0.22)]">
               <p className="text-xs font-bold uppercase tracking-[0.28em] text-[#7EE6D6]">Risk review</p>
               <h2 className="mt-3 text-2xl font-semibold tracking-[-0.03em] text-white">{patientProfile.riskFlags.length ? "Flags need review" : "No active flags"}</h2>
-              <p className="mt-3 text-sm leading-6 text-slate-300">LeanDoze surfaces patterns only. Review this with your clinician.</p>
-              <div className="mt-6 space-y-3">
-                {(patientProfile.riskFlags.length ? patientProfile.riskFlags : []).map((flag) => (
-                  <div key={flag.id} className="rounded-2xl bg-white/8 p-4 ring-1 ring-white/10">
-                    <div className="flex items-center justify-between gap-3">
-                      <p className="font-semibold">{flag.title}</p>
-                      <span className="text-xs font-bold uppercase text-[#7EE6D6]">{flag.level}</span>
-                    </div>
-                    <p className="mt-2 text-sm text-slate-300">{flag.description}</p>
+              <p className="mt-3 text-sm leading-6 text-slate-300">{muscleScore.explanation}</p>
+              <div className="mt-8 flex items-center gap-5">
+                <div className="grid size-28 place-items-center rounded-full bg-white/8 text-center ring-1 ring-white/10">
+                  <div>
+                    <p className="text-4xl font-semibold">{muscleScore.score}</p>
+                    <p className="mt-1 text-[10px] font-bold uppercase tracking-[0.18em] text-[#7EE6D6]">Score</p>
                   </div>
-                ))}
-                {!patientProfile.riskFlags.length ? <ShieldPlus className="size-12 text-[#7EE6D6]" /> : null}
+                </div>
+                <div>
+                  <p className="text-lg font-semibold">{muscleScore.label}</p>
+                  <p className="mt-2 text-sm text-slate-300">{doseRhythm.explanation}</p>
+                </div>
               </div>
             </section>
 
             <section className="rounded-[22px] border border-[#E2E8F0]/80 bg-white p-6 shadow-[0_12px_35px_rgba(15,23,42,0.055)]">
               <div className="flex items-center gap-3">
                 <div className="grid size-10 place-items-center rounded-2xl bg-rose-50 text-rose-500 ring-1 ring-rose-100">
-                  <HeartPulse className="size-5" />
+                  <Dumbbell className="size-5" />
                 </div>
-                <h2 className="font-semibold tracking-tight text-[#0B1220]">Recent symptoms</h2>
+                <h2 className="font-semibold tracking-tight text-[#0B1220]">Daily guidance</h2>
               </div>
               <div className="mt-5 space-y-3">
-                {patientProfile.symptomLogs.slice(0, 3).map((log) => (
-                  <div key={log.id} className="rounded-2xl bg-slate-50 p-4 text-sm text-slate-600">
-                    Nausea {log.nausea.toLowerCase()}, constipation {log.constipation.toLowerCase()}, reflux {log.reflux.toLowerCase()}
+                {patientProfile.guidanceMessages.slice(0, 3).map((message) => (
+                  <div key={message.id} className="rounded-2xl bg-slate-50 p-4 text-sm text-slate-600">
+                    <p className="font-semibold text-[#0B1220]">{message.title}</p>
+                    <p className="mt-1 leading-6">{message.message}</p>
                   </div>
                 ))}
-                {!patientProfile.symptomLogs.length ? <p className="text-sm text-slate-500">No symptoms logged yet.</p> : null}
+                {!patientProfile.guidanceMessages.length ? <p className="text-sm text-slate-500">Complete a check-in to generate daily guidance.</p> : null}
               </div>
             </section>
           </aside>

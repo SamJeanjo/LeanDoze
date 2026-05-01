@@ -8,6 +8,7 @@ import {
   InviteType,
   MedicationName,
   PatientAccessRole,
+  Prisma,
   RiskFlagLevel,
   SymptomSeverity,
   UserRole,
@@ -15,6 +16,8 @@ import {
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getDb } from "@/lib/db";
+import { generateGuidance } from "@/lib/guidance-engine";
+import { createRiskFlags } from "@/lib/risk-engine";
 
 const disclaimer =
   "LeanDoze does not provide medical advice. Review this report with your clinician.";
@@ -39,6 +42,16 @@ function dateValue(formData: FormData, key: string, fallback = new Date()) {
   return Number.isNaN(parsed.getTime()) ? fallback : parsed;
 }
 
+function optionalNumberValue(formData: FormData, key: string) {
+  const value = textValue(formData, key);
+  if (!value) {
+    return null;
+  }
+
+  const parsed = Number.parseFloat(value);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
 function medicationValue(value: string): MedicationName {
   const normalized = value.toUpperCase() as MedicationName;
   return Object.values(MedicationName).includes(normalized) ? normalized : MedicationName.OTHER;
@@ -58,6 +71,11 @@ function severityForSymptom(formData: FormData, symptom: string) {
   return checked ? severityValue(textValue(formData, `${symptom}Severity`)) : SymptomSeverity.NONE;
 }
 
+function booleanValue(formData: FormData, key: string) {
+  const value = formData.get(key);
+  return value === "on" || value === "true" || value === "yes";
+}
+
 function riskLevelToSummary(level: RiskFlagLevel) {
   if (level === RiskFlagLevel.URGENT) {
     return "Urgent review";
@@ -68,6 +86,38 @@ function riskLevelToSummary(level: RiskFlagLevel) {
   }
 
   return "Watch trend";
+}
+
+function appUrl() {
+  if (process.env.NEXT_PUBLIC_APP_URL) {
+    return process.env.NEXT_PUBLIC_APP_URL;
+  }
+
+  if (process.env.VERCEL_URL) {
+    return `https://${process.env.VERCEL_URL}`;
+  }
+
+  return "http://localhost:3010";
+}
+
+async function sendInviteEmail(email: string, inviteLink: string) {
+  if (!process.env.RESEND_API_KEY) {
+    return;
+  }
+
+  await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      from: process.env.RESEND_FROM_EMAIL || "LeanDoze <onboarding@resend.dev>",
+      to: email,
+      subject: "You have a LeanDoze invite",
+      html: `<p>You have been invited to connect on LeanDoze.</p><p><a href="${inviteLink}">Accept invite</a></p><p>LeanDoze does not provide medical advice. Review reports with your clinician.</p>`,
+    }),
+  });
 }
 
 async function requireUser() {
@@ -134,16 +184,18 @@ export async function selectRoleAction(formData: FormData) {
   }
 
   await db.user.update({ where: { id: user.id }, data: { role: UserRole.PATIENT } });
-  redirect("/app/medication");
+  redirect("/app/onboarding");
 }
 
 export async function saveMedicationPlanAction(formData: FormData) {
   const { db, user } = await requireUser();
   const medicationRaw = textValue(formData, "medication");
+  const customMedicationName = textValue(formData, "customMedicationName");
   const startWeightLb = numberValue(formData, "startWeightLb");
   const goalWeightLb = numberValue(formData, "goalWeightLb");
   const proteinGoalGrams = intValue(formData, "proteinGoalGrams", 120);
   const hydrationGoalOz = intValue(formData, "hydrationGoalOz", 90);
+  const mainConcerns = formData.getAll("mainConcerns").map(String);
 
   const patientProfile = await db.patientProfile.upsert({
     where: { userId: user.id },
@@ -152,6 +204,7 @@ export async function saveMedicationPlanAction(formData: FormData) {
       goalWeightLb,
       proteinGoalGrams,
       hydrationGoalOz,
+      mainConcerns,
     },
     create: {
       userId: user.id,
@@ -159,6 +212,7 @@ export async function saveMedicationPlanAction(formData: FormData) {
       goalWeightLb,
       proteinGoalGrams,
       hydrationGoalOz,
+      mainConcerns,
     },
   });
 
@@ -171,7 +225,7 @@ export async function saveMedicationPlanAction(formData: FormData) {
     data: {
       patientId: patientProfile.id,
       medication: medicationValue(medicationRaw),
-      customName: medicationValue(medicationRaw) === MedicationName.OTHER ? medicationRaw : null,
+      customName: medicationValue(medicationRaw) === MedicationName.OTHER ? customMedicationName || medicationRaw : null,
       doseMg: numberValue(formData, "doseMg"),
       frequency: frequencyValue(textValue(formData, "frequency")),
       startDate: dateValue(formData, "startDate", new Date()),
@@ -185,15 +239,22 @@ export async function saveMedicationPlanAction(formData: FormData) {
   redirect("/app/dashboard");
 }
 
-async function createRiskFlagsForCheckIn(patientId: string) {
+export async function savePatientOnboardingAction(formData: FormData) {
+  await saveMedicationPlanAction(formData);
+}
+
+async function runPatientEngines(patientId: string) {
   const db = getDb();
   const patient = await db.patientProfile.findUnique({
     where: { id: patientId },
     include: {
-      hydrationLogs: { orderBy: { loggedAt: "desc" }, take: 3 },
-      nutritionLogs: { orderBy: { loggedAt: "desc" }, take: 3 },
+      hydrationLogs: { orderBy: { loggedAt: "desc" }, take: 7 },
+      nutritionLogs: { orderBy: { loggedAt: "desc" }, take: 7 },
       symptomLogs: { orderBy: { loggedAt: "desc" }, take: 3 },
-      doseLogs: { orderBy: { scheduledDate: "desc" }, take: 1 },
+      dailyCheckIns: { orderBy: { checkInDate: "desc" }, take: 7 },
+      doseLogs: { orderBy: { scheduledDate: "desc" }, take: 2 },
+      weightLogs: { orderBy: { loggedAt: "desc" }, take: 2 },
+      medicationPlans: { where: { active: true }, orderBy: { createdAt: "desc" }, take: 1 },
     },
   });
 
@@ -201,69 +262,79 @@ async function createRiskFlagsForCheckIn(patientId: string) {
     return;
   }
 
-  const flags: Array<{
-    level: RiskFlagLevel;
-    title: string;
-    description: string;
-    source: string;
-  }> = [];
-
   const latestSymptoms = patient.symptomLogs[0];
+  const today = new Date(new Date().toDateString());
+  const latestDaily = patient.dailyCheckIns[0];
+  const latestDoseMissed = patient.doseLogs[0]?.missed ?? false;
+  const doseRecentlyIncreased = patient.medicationPlans[0]?.updatedAt
+    ? Date.now() - patient.medicationPlans[0].updatedAt.getTime() < 1000 * 60 * 60 * 24 * 14
+    : false;
+  const hydrationLastDays = patient.hydrationLogs.map((log) => log.ounces);
+  const proteinLastDays = patient.nutritionLogs.map((log) => log.proteinGrams ?? 0);
 
-  if (latestSymptoms?.abdominalPain === SymptomSeverity.SEVERE) {
-    flags.push({
-      level: RiskFlagLevel.URGENT,
-      title: "Severe abdominal pain logged",
-      description: "A severe abdominal pain symptom was logged. Review this with your clinician.",
-      source: "symptom-log",
-    });
-  }
+  await createRiskFlags({
+    patientId,
+    hydrationGoalOz: patient.hydrationGoalOz,
+    proteinGoalGrams: patient.proteinGoalGrams,
+    currentWeightLb: patient.weightLogs[0]?.weightLb,
+    previousWeightLb: patient.weightLogs[1]?.weightLb,
+    latestDoseMissed,
+    doseRecentlyIncreased,
+    hydrationLastDays,
+    proteinLastDays,
+    symptomLastDays: patient.symptomLogs.map((log) => ({
+      nausea: log.nausea,
+      vomiting: log.vomiting,
+      constipation: log.constipation,
+      abdominalPain: log.abdominalPain,
+    })),
+  });
 
-  if (latestSymptoms?.vomiting === SymptomSeverity.SEVERE) {
-    flags.push({
-      level: RiskFlagLevel.URGENT,
-      title: "Severe vomiting logged",
-      description: "Severe vomiting was logged. Review this with your clinician.",
-      source: "symptom-log",
-    });
-  }
+  const guidance = generateGuidance({
+    date: today,
+    proteinToday: patient.nutritionLogs[0]?.proteinGrams ?? 0,
+    proteinGoal: patient.proteinGoalGrams,
+    hydrationToday: patient.hydrationLogs[0]?.ounces ?? 0,
+    hydrationGoal: patient.hydrationGoalOz,
+    proteinLastDays,
+    hydrationLastDays,
+    energyLastDays: patient.dailyCheckIns.map((checkIn) => checkIn.energyLevel ?? 0),
+    symptomsToday: latestSymptoms
+      ? {
+          nausea: latestSymptoms.nausea,
+          vomiting: latestSymptoms.vomiting,
+          constipation: latestSymptoms.constipation,
+          diarrhea: latestSymptoms.diarrhea,
+          reflux: latestSymptoms.reflux,
+          fatigue: latestSymptoms.fatigue,
+          abdominalPain: latestSymptoms.abdominalPain,
+        }
+      : undefined,
+    symptomsLoggedToday: Boolean(latestSymptoms && latestSymptoms.loggedAt >= today),
+    daysSinceDose: patient.doseLogs[0]?.takenDate
+      ? Math.floor((Date.now() - patient.doseLogs[0].takenDate.getTime()) / 86_400_000)
+      : undefined,
+    movementMinutesToday: latestDaily?.movementMinutes ?? 0,
+    strengthTrainingToday: latestDaily?.strengthTraining ?? false,
+    constipationDays: patient.symptomLogs.filter((log) => log.constipation === SymptomSeverity.MODERATE || log.constipation === SymptomSeverity.SEVERE).length,
+  });
 
-  if (patient.hydrationLogs.length >= 3 && patient.hydrationLogs.every((log) => log.ounces < patient.hydrationGoalOz)) {
-    flags.push({
-      level: RiskFlagLevel.MEDIUM,
-      title: "Hydration below goal for 3 days",
-      description: "Hydration has been below the configured target for three recent logs.",
-      source: "hydration-log",
-    });
-  }
+  await db.guidanceMessage.deleteMany({
+    where: {
+      patientId,
+      date: today,
+    },
+  });
 
-  if (
-    patient.nutritionLogs.length >= 3 &&
-    patient.nutritionLogs.every((log) => (log.proteinGrams ?? 0) < patient.proteinGoalGrams)
-  ) {
-    flags.push({
-      level: RiskFlagLevel.MEDIUM,
-      title: "Protein below goal for 3 days",
-      description: "Protein intake has been below the configured target for three recent logs.",
-      source: "nutrition-log",
-    });
-  }
-
-  if (patient.doseLogs.some((log) => log.missed)) {
-    flags.push({
-      level: RiskFlagLevel.LOW,
-      title: "Missed dose logged",
-      description: "A scheduled dose was marked missed. Review this with your clinician.",
-      source: "dose-log",
-    });
-  }
-
-  for (const flag of flags) {
-    await db.riskFlag.create({
+  for (const item of guidance) {
+    await db.guidanceMessage.create({
       data: {
         patientId,
-        ...flag,
-        recommendation: "Review this with your clinician.",
+        title: item.title,
+        message: item.message,
+        category: item.category,
+        priority: item.priority,
+        date: item.date,
       },
     });
   }
@@ -274,14 +345,17 @@ export async function saveDailyCheckInAction(formData: FormData) {
   const loggedAt = new Date();
   const checkInDate = new Date(loggedAt.toDateString());
   const doseStatus = textValue(formData, "doseStatus");
-
-  await db.$transaction([
+  const weightLb = optionalNumberValue(formData, "weightLb");
+  const operations: Prisma.PrismaPromise<unknown>[] = [
     db.dailyCheckIn.upsert({
       where: { patientId_checkInDate: { patientId: patientProfile.id, checkInDate } },
       update: {
         appetiteLevel: intValue(formData, "appetiteLevel", 5),
         energyLevel: intValue(formData, "energyLevel", 5),
         moodLevel: intValue(formData, "moodLevel", 5),
+        movementMinutes: intValue(formData, "movementMinutes", 0),
+        strengthTraining: booleanValue(formData, "strengthTraining"),
+        bowelMovement: booleanValue(formData, "bowelMovement"),
         notes: textValue(formData, "notes") || null,
       },
       create: {
@@ -290,11 +364,11 @@ export async function saveDailyCheckInAction(formData: FormData) {
         appetiteLevel: intValue(formData, "appetiteLevel", 5),
         energyLevel: intValue(formData, "energyLevel", 5),
         moodLevel: intValue(formData, "moodLevel", 5),
+        movementMinutes: intValue(formData, "movementMinutes", 0),
+        strengthTraining: booleanValue(formData, "strengthTraining"),
+        bowelMovement: booleanValue(formData, "bowelMovement"),
         notes: textValue(formData, "notes") || null,
       },
-    }),
-    db.weightLog.create({
-      data: { patientId: patientProfile.id, loggedAt, weightLb: numberValue(formData, "weightLb") },
     }),
     db.nutritionLog.create({
       data: { patientId: patientProfile.id, loggedAt, proteinGrams: intValue(formData, "proteinGrams") },
@@ -308,6 +382,7 @@ export async function saveDailyCheckInAction(formData: FormData) {
         loggedAt,
         nausea: severityForSymptom(formData, "nausea"),
         constipation: severityForSymptom(formData, "constipation"),
+        diarrhea: severityForSymptom(formData, "diarrhea"),
         reflux: severityForSymptom(formData, "reflux"),
         fatigue: severityForSymptom(formData, "fatigue"),
         vomiting: severityForSymptom(formData, "vomiting"),
@@ -315,7 +390,17 @@ export async function saveDailyCheckInAction(formData: FormData) {
         notes: textValue(formData, "notes") || null,
       },
     }),
-  ]);
+  ];
+
+  if (weightLb) {
+    operations.push(
+      db.weightLog.create({
+        data: { patientId: patientProfile.id, loggedAt, weightLb },
+      }),
+    );
+  }
+
+  await db.$transaction(operations);
 
   if (doseStatus === "missed") {
     const plan = patientProfile.medicationPlans[0];
@@ -331,10 +416,10 @@ export async function saveDailyCheckInAction(formData: FormData) {
     });
   }
 
-  await createRiskFlagsForCheckIn(patientProfile.id);
+  await runPatientEngines(patientProfile.id);
   revalidatePath("/app/dashboard");
   revalidatePath("/app/check-in");
-  redirect("/app/dashboard");
+  redirect("/app/dashboard?checkin=saved");
 }
 
 export async function generateDoctorReportAction(formData: FormData) {
@@ -364,6 +449,14 @@ export async function generateDoctorReportAction(formData: FormData) {
   const firstWeight = weights[0]?.weightLb;
   const lastWeight = weights[weights.length - 1]?.weightLb;
   const weightTrend = firstWeight && lastWeight ? `${(lastWeight - firstWeight).toFixed(1)} lb` : "Not enough data";
+  const plan = patientProfile.medicationPlans[0];
+  const notes = symptoms.map((symptom) => symptom.notes).filter(Boolean);
+  const discussionTopics = [
+    ...(riskFlags.length ? ["Review active risk flags and symptom patterns."] : []),
+    ...(hydrationAverage < patientProfile.hydrationGoalOz ? ["Discuss hydration consistency and tolerance."] : []),
+    ...(proteinAverage < patientProfile.proteinGoalGrams ? ["Discuss protein intake and muscle protection strategy."] : []),
+    ...(symptoms.length ? ["Review symptom timing around dose days."] : []),
+  ];
 
   const report = await db.doctorReport.create({
     data: {
@@ -374,11 +467,15 @@ export async function generateDoctorReportAction(formData: FormData) {
       flagsSummary: riskFlags.map((flag) => `${riskLevelToSummary(flag.level)}: ${flag.title}`).join("\n") || "No active flags in this period.",
       reportData: {
         days,
+        medication: plan ? `${plan.medication}${plan.customName ? ` (${plan.customName})` : ""}` : "No active plan",
+        doseMg: plan?.doseMg ?? null,
         weightTrend,
         adherence,
         hydrationAverage,
         proteinAverage,
         symptomLogs: symptoms.length,
+        patientNotes: notes,
+        discussionTopics,
         riskFlags: riskFlags.map((flag) => ({ title: flag.title, level: flag.level, description: flag.description })),
         disclaimer,
       },
@@ -392,18 +489,21 @@ export async function generateDoctorReportAction(formData: FormData) {
 export async function inviteDoctorAction(formData: FormData) {
   const { db, user, patientProfile } = await requirePatientProfile();
   const email = textValue(formData, "email").toLowerCase();
+  const token = randomBytes(32).toString("base64url");
 
   await db.patientInvite.create({
     data: {
       type: InviteType.PATIENT_TO_CLINIC,
       status: InviteStatus.PENDING,
-      token: randomBytes(32).toString("base64url"),
+      token,
       email,
       patientId: patientProfile.id,
       invitedByUserId: user.id,
       expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 14),
     },
   });
+
+  await sendInviteEmail(email, `${appUrl()}/invite/${token}`);
 
   revalidatePath("/app/invite-doctor");
   redirect("/app/invite-doctor?sent=1");
@@ -412,6 +512,8 @@ export async function inviteDoctorAction(formData: FormData) {
 export async function invitePatientAction(formData: FormData) {
   const { db, user } = await requireUser();
   const membership = await db.clinicMembership.findFirst({ where: { userId: user.id } });
+  const email = textValue(formData, "email").toLowerCase();
+  const token = randomBytes(32).toString("base64url");
 
   if (!membership) {
     redirect("/app/dashboard");
@@ -421,13 +523,15 @@ export async function invitePatientAction(formData: FormData) {
     data: {
       type: InviteType.CLINIC_TO_PATIENT,
       status: InviteStatus.PENDING,
-      token: randomBytes(32).toString("base64url"),
-      email: textValue(formData, "email").toLowerCase(),
+      token,
+      email,
       clinicId: membership.clinicId,
       invitedByUserId: user.id,
       expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 14),
     },
   });
+
+  await sendInviteEmail(email, `${appUrl()}/invite/${token}`);
 
   revalidatePath("/clinic/invite-patient");
   redirect("/clinic/invite-patient?sent=1");

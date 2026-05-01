@@ -132,18 +132,20 @@ model PatientProfile {
   goalWeightLb     Float?
   proteinGoalGrams Int       @default(120)
   hydrationGoalOz  Int       @default(90)
+  mainConcerns     String[]  @default([])
 
-  medicationPlans MedicationPlan[]
-  doseLogs        DoseLog[]
-  dailyCheckIns   DailyCheckIn[]
-  weightLogs      WeightLog[]
-  nutritionLogs   NutritionLog[]
-  hydrationLogs   HydrationLog[]
-  symptomLogs     SymptomLog[]
-  riskFlags       RiskFlag[]
-  doctorReports   DoctorReport[]
-  invites         PatientInvite[]
-  accessGrants    PatientAccess[]
+  medicationPlans  MedicationPlan[]
+  doseLogs         DoseLog[]
+  dailyCheckIns    DailyCheckIn[]
+  weightLogs       WeightLog[]
+  nutritionLogs    NutritionLog[]
+  hydrationLogs    HydrationLog[]
+  symptomLogs      SymptomLog[]
+  riskFlags        RiskFlag[]
+  doctorReports    DoctorReport[]
+  invites          PatientInvite[]
+  accessGrants     PatientAccess[]
+  guidanceMessages GuidanceMessage[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -207,10 +209,13 @@ model DailyCheckIn {
   patientId String
   patient   PatientProfile @relation(fields: [patientId], references: [id], onDelete: Cascade)
 
-  checkInDate   DateTime
-  appetiteLevel Int? // 1-10
-  energyLevel   Int? // 1-10
-  moodLevel     Int? // 1-10
+  checkInDate      DateTime
+  appetiteLevel    Int? // 1-10
+  energyLevel      Int? // 1-10
+  moodLevel        Int? // 1-10
+  movementMinutes  Int?
+  strengthTraining Boolean  @default(false)
+  bowelMovement    Boolean?
 
   notes String?
 
@@ -388,4 +393,23 @@ model PatientAccess {
   @@index([patientId])
   @@index([clinicId])
   @@index([revokedAt])
+}
+
+model GuidanceMessage {
+  id String @id @default(cuid())
+
+  patientId String
+  patient   PatientProfile @relation(fields: [patientId], references: [id], onDelete: Cascade)
+
+  title    String
+  message  String
+  category String
+  priority Int      @default(1)
+  date     DateTime
+
+  createdAt DateTime @default(now())
+
+  @@index([patientId])
+  @@index([date])
+  @@index([priority])
 }

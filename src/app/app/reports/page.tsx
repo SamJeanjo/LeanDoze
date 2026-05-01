@@ -17,6 +17,10 @@ export default async function DoctorReportsPage() {
         hydrationAverage?: number;
         proteinAverage?: number;
         symptomLogs?: number;
+        medication?: string;
+        doseMg?: number | null;
+        patientNotes?: string[];
+        discussionTopics?: string[];
         riskFlags?: Array<{ title: string; level: string; description: string }>;
       }
     | undefined;
@@ -62,6 +66,7 @@ export default async function DoctorReportsPage() {
           <div className="mt-8 grid gap-4 md:grid-cols-2">
             {[
               ["Dose adherence", data?.adherence !== undefined ? `${data.adherence}%` : "Pending", "Based on logged doses"],
+              ["Medication", data?.medication ?? "Pending", data?.doseMg ? `${data.doseMg}mg active plan` : "From medication setup"],
               ["Protein average", data?.proteinAverage !== undefined ? `${data.proteinAverage}g/day` : "Pending", "From nutrition logs"],
               ["Hydration average", data?.hydrationAverage !== undefined ? `${data.hydrationAverage}oz/day` : "Pending", "From hydration logs"],
               ["Weight trend", data?.weightTrend ?? "Pending", "From weight logs"],
@@ -76,6 +81,29 @@ export default async function DoctorReportsPage() {
 
           <div className="mt-8 rounded-2xl bg-[#FFF7ED] p-4 text-sm leading-6 text-slate-700 ring-1 ring-orange-100">
             {reportDisclaimer}
+          </div>
+
+          <div className="mt-8 grid gap-5 lg:grid-cols-2">
+            <section className="rounded-[22px] border border-[#E2E8F0]/80 bg-white p-5">
+              <h3 className="text-lg font-semibold text-[#050816]">Suggested discussion topics</h3>
+              <div className="mt-4 space-y-3">
+                {(data?.discussionTopics?.length ? data.discussionTopics : ["Bring this report to your next clinician visit."]).map((topic) => (
+                  <p key={topic} className="rounded-2xl bg-[#F8FAFC] p-4 text-sm leading-6 text-[#64748B]">
+                    {topic}
+                  </p>
+                ))}
+              </div>
+            </section>
+            <section className="rounded-[22px] border border-[#E2E8F0]/80 bg-white p-5">
+              <h3 className="text-lg font-semibold text-[#050816]">Patient notes</h3>
+              <div className="mt-4 space-y-3">
+                {(data?.patientNotes?.length ? data.patientNotes : ["No notes added in this report period."]).map((note) => (
+                  <p key={note} className="rounded-2xl bg-[#F8FAFC] p-4 text-sm leading-6 text-[#64748B]">
+                    {note}
+                  </p>
+                ))}
+              </div>
+            </section>
           </div>
 
           <div className="mt-8">

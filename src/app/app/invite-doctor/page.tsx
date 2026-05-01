@@ -8,6 +8,7 @@ export const dynamic = "force-dynamic";
 
 export default async function InviteDoctorPage() {
   const { db, patientProfile } = await getPatientAppState();
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3010");
   const invites = patientProfile
     ? await db.patientInvite.findMany({
         where: { patientId: patientProfile.id },
@@ -88,6 +89,9 @@ export default async function InviteDoctorPage() {
                       <StatusBadge tone={invite.status === "ACCEPTED" ? "green" : "amber"}>{invite.status}</StatusBadge>
                     </div>
                     <p className="mt-1 text-sm text-slate-500">Expires {invite.expiresAt.toLocaleDateString()}</p>
+                    <code className="mt-3 block overflow-hidden rounded-xl border border-slate-200 bg-white p-3 text-xs text-slate-600">
+                      {baseUrl}/invite/{invite.token}
+                    </code>
                   </div>
                 ))}
                 {!invites.length ? <p className="text-sm text-slate-500">No invites sent yet.</p> : null}
