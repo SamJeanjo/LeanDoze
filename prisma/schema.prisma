@@ -1,0 +1,226 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id             String             @id @default(cuid())
+  clerkUserId    String             @unique
+  email          String             @unique
+  name           String?
+  role           UserRole           @default(PATIENT)
+  patientProfile PatientProfile?
+  memberships    ClinicMembership[]
+  reports        DoctorReport[]     @relation("ReportCreator")
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
+}
+
+model Clinic {
+  id          String             @id @default(cuid())
+  name        String
+  code        String             @unique
+  memberships ClinicMembership[]
+  patients    PatientProfile[]
+  riskFlags   RiskFlag[]
+  reports     DoctorReport[]
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+}
+
+model ClinicMembership {
+  id        String           @id @default(cuid())
+  userId    String
+  clinicId  String
+  role      ClinicRole       @default(CLINICIAN)
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  clinic    Clinic           @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+
+  @@unique([userId, clinicId])
+}
+
+model PatientProfile {
+  id             String           @id @default(cuid())
+  userId         String           @unique
+  clinicId       String?
+  dateOfBirth    DateTime?
+  currentWeight  Float?
+  goalWeight     Float?
+  proteinGoal    Int             @default(120)
+  hydrationGoal  Int             @default(90)
+  user           User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  clinic         Clinic?          @relation(fields: [clinicId], references: [id], onDelete: SetNull)
+  medicationPlan MedicationPlan?
+  doseLogs       DoseLog[]
+  checkIns       DailyCheckIn[]
+  weightLogs     WeightLog[]
+  symptomLogs    SymptomLog[]
+  nutritionLogs  NutritionLog[]
+  hydrationLogs  HydrationLog[]
+  riskFlags      RiskFlag[]
+  reports        DoctorReport[]
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+}
+
+model MedicationPlan {
+  id               String         @id @default(cuid())
+  patientProfileId String         @unique
+  medicationName   String
+  doseAmount       String
+  injectionSchedule String
+  nextDoseDate     DateTime
+  lastDoseIncrease DateTime?
+  status           PlanStatus     @default(ACTIVE)
+  patientProfile   PatientProfile @relation(fields: [patientProfileId], references: [id], onDelete: Cascade)
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+}
+
+model DoseLog {
+  id               String         @id @default(cuid())
+  patientProfileId String
+  dueDate          DateTime
+  takenAt          DateTime?
+  doseAmount       String?
+  status           DoseStatus     @default(SCHEDULED)
+  notes            String?
+  patientProfile   PatientProfile @relation(fields: [patientProfileId], references: [id], onDelete: Cascade)
+  createdAt        DateTime       @default(now())
+}
+
+model DailyCheckIn {
+  id               String         @id @default(cuid())
+  patientProfileId String
+  checkInDate      DateTime       @default(now())
+  energyLevel      Int?
+  appetiteLevel    Int?
+  notes            String?
+  patientProfile   PatientProfile @relation(fields: [patientProfileId], references: [id], onDelete: Cascade)
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+}
+
+model WeightLog {
+  id               String         @id @default(cuid())
+  patientProfileId String
+  weight           Float
+  loggedAt         DateTime       @default(now())
+  patientProfile   PatientProfile @relation(fields: [patientProfileId], references: [id], onDelete: Cascade)
+}
+
+model SymptomLog {
+  id               String          @id @default(cuid())
+  patientProfileId String
+  symptom          String
+  severity         SymptomSeverity @default(MILD)
+  durationDays     Int?
+  notes            String?
+  loggedAt         DateTime        @default(now())
+  patientProfile   PatientProfile  @relation(fields: [patientProfileId], references: [id], onDelete: Cascade)
+}
+
+model NutritionLog {
+  id               String         @id @default(cuid())
+  patientProfileId String
+  proteinGrams     Int
+  mealNotes        String?
+  loggedAt         DateTime       @default(now())
+  patientProfile   PatientProfile @relation(fields: [patientProfileId], references: [id], onDelete: Cascade)
+}
+
+model HydrationLog {
+  id               String         @id @default(cuid())
+  patientProfileId String
+  hydrationOz      Int
+  loggedAt         DateTime       @default(now())
+  patientProfile   PatientProfile @relation(fields: [patientProfileId], references: [id], onDelete: Cascade)
+}
+
+model RiskFlag {
+  id               String         @id @default(cuid())
+  patientProfileId String
+  clinicId         String?
+  type             RiskFlagType
+  severity         RiskSeverity   @default(WATCH)
+  title            String
+  summary          String
+  recommendation   String         @default("Review this with your clinician.")
+  resolvedAt       DateTime?
+  patientProfile   PatientProfile @relation(fields: [patientProfileId], references: [id], onDelete: Cascade)
+  clinic           Clinic?        @relation(fields: [clinicId], references: [id], onDelete: SetNull)
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+}
+
+model DoctorReport {
+  id               String         @id @default(cuid())
+  patientProfileId String
+  clinicId         String?
+  createdByUserId  String?
+  title            String
+  summary          String
+  periodStart      DateTime
+  periodEnd        DateTime
+  reportJson       Json
+  patientProfile   PatientProfile @relation(fields: [patientProfileId], references: [id], onDelete: Cascade)
+  clinic           Clinic?        @relation(fields: [clinicId], references: [id], onDelete: SetNull)
+  createdBy        User?          @relation("ReportCreator", fields: [createdByUserId], references: [id], onDelete: SetNull)
+  createdAt        DateTime       @default(now())
+}
+
+enum UserRole {
+  PATIENT
+  CLINIC_ADMIN
+  CLINICIAN
+}
+
+enum ClinicRole {
+  OWNER
+  ADMIN
+  CLINICIAN
+}
+
+enum PlanStatus {
+  ACTIVE
+  PAUSED
+  COMPLETED
+}
+
+enum DoseStatus {
+  SCHEDULED
+  TAKEN
+  MISSED
+  SKIPPED_BY_CLINIC
+}
+
+enum SymptomSeverity {
+  NONE
+  MILD
+  MODERATE
+  SEVERE
+}
+
+enum RiskSeverity {
+  WATCH
+  ELEVATED
+  URGENT
+}
+
+enum RiskFlagType {
+  SEVERE_ABDOMINAL_PAIN
+  PERSISTENT_VOMITING
+  DEHYDRATION_RISK
+  CONSTIPATION_MULTIPLE_DAYS
+  NAUSEA_WORSENING_AFTER_DOSE_INCREASE
+  MISSED_DOSE
+  RAPID_WEIGHT_CHANGE
+  LOW_HYDRATION_MULTIPLE_DAYS
+  LOW_PROTEIN_MULTIPLE_DAYS
+}
