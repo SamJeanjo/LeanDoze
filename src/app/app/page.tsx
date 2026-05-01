@@ -10,6 +10,7 @@ import {
   ShieldPlus,
   Utensils,
 } from "lucide-react";
+import Link from "next/link";
 import { DashboardShell, Footer } from "@/components/layout";
 import { StatusBadge } from "@/components/status-badge";
 import { cn } from "@/lib/utils";
@@ -102,6 +103,22 @@ export default function PatientDashboard() {
                 <div className="rounded-2xl bg-slate-50 px-4 py-3 text-sm text-slate-500 ring-1 ring-slate-200">
                   <span className="font-semibold text-[#0B1220]">4</span> actions today
                 </div>
+              </div>
+
+              <div className="relative z-10 mt-6 flex flex-wrap gap-3">
+                {[
+                  ["Daily check-in", "/app/check-in"],
+                  ["Medication setup", "/app/medication"],
+                  ["Doctor report", "/app/report"],
+                ].map(([label, href]) => (
+                  <Link
+                    key={href}
+                    href={href}
+                    className="rounded-full border border-[#E2E8F0] bg-white px-4 py-2 text-sm font-semibold text-[#0B1220] shadow-[0_8px_20px_rgba(15,23,42,0.05)] transition hover:-translate-y-0.5 hover:border-[#17C2B2]"
+                  >
+                    {label}
+                  </Link>
+                ))}
               </div>
 
               <div className="relative z-10 mt-8 grid gap-3">
