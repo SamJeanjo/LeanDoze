@@ -76,7 +76,8 @@ model User {
 
   patientProfile PatientProfile?
   memberships    ClinicMembership[]
-  sentInvites    PatientInvite[]    @relation("InviteSender")
+  sentInvites    PatientInvite[]     @relation("InviteSender")
+  clinicNotes    ClinicPatientNote[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -94,6 +95,7 @@ model Clinic {
   patients    PatientProfile[]
   invites     PatientInvite[]
   access      PatientAccess[]
+  notes       ClinicPatientNote[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -146,6 +148,7 @@ model PatientProfile {
   invites          PatientInvite[]
   accessGrants     PatientAccess[]
   guidanceMessages GuidanceMessage[]
+  clinicNotes      ClinicPatientNote[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -412,4 +415,25 @@ model GuidanceMessage {
   @@index([patientId])
   @@index([date])
   @@index([priority])
+}
+
+model ClinicPatientNote {
+  id String @id @default(cuid())
+
+  patientId String
+  patient   PatientProfile @relation(fields: [patientId], references: [id], onDelete: Cascade)
+
+  clinicId String
+  clinic   Clinic @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+
+  authorUserId String
+  author       User   @relation(fields: [authorUserId], references: [id], onDelete: Cascade)
+
+  note String
+
+  createdAt DateTime @default(now())
+
+  @@index([patientId])
+  @@index([clinicId])
+  @@index([createdAt])
 }

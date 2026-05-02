@@ -10,6 +10,7 @@ import {
   PatientAccessRole,
   Prisma,
   RiskFlagLevel,
+  RiskFlagStatus,
   SymptomSeverity,
   UserRole,
 } from "@prisma/client";
@@ -634,6 +635,65 @@ export async function revokePatientInviteAction(formData: FormData) {
   });
 
   revalidatePath("/clinic/invite-patient");
+}
+
+async function requireClinicPatientAccess(patientId: string) {
+  const { db, user, membership } = await requireClinicMembership();
+  const access = await db.patientAccess.findFirst({
+    where: {
+      patientId,
+      clinicId: membership.clinicId,
+      revokedAt: null,
+    },
+  });
+
+  if (!access) {
+    redirect("/clinic/patients");
+  }
+
+  return { db, user, membership, access };
+}
+
+export async function markPatientRiskFlagsReviewedAction(formData: FormData) {
+  const patientId = textValue(formData, "patientId");
+  const { db } = await requireClinicPatientAccess(patientId);
+
+  await db.riskFlag.updateMany({
+    where: {
+      patientId,
+      status: RiskFlagStatus.OPEN,
+      resolvedAt: null,
+    },
+    data: {
+      status: RiskFlagStatus.REVIEWED,
+      reviewedAt: new Date(),
+    },
+  });
+
+  revalidatePath("/clinic/dashboard");
+  revalidatePath(`/clinic/patients/${patientId}`);
+}
+
+export async function addClinicPatientNoteAction(formData: FormData) {
+  const patientId = textValue(formData, "patientId");
+  const note = textValue(formData, "note");
+  const { db, user, membership } = await requireClinicPatientAccess(patientId);
+
+  if (!note) {
+    return;
+  }
+
+  await db.clinicPatientNote.create({
+    data: {
+      patientId,
+      clinicId: membership.clinicId,
+      authorUserId: user.id,
+      note,
+    },
+  });
+
+  revalidatePath("/clinic/dashboard");
+  revalidatePath(`/clinic/patients/${patientId}`);
 }
 
 export async function acceptInviteAction(formData: FormData) {
