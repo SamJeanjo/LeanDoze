@@ -18,6 +18,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getDb } from "@/lib/db";
 import { generateGuidance } from "@/lib/guidance-engine";
+import { formatNarrativeForUI, generatePatientNarrative } from "@/lib/report-narrative";
 import { evaluatePatientRisk } from "@/lib/risk-engine";
 
 const disclaimer =
@@ -460,6 +461,7 @@ export async function markDoseStatusAction(formData: FormData) {
 export async function generateDoctorReportAction(formData: FormData) {
   const { db, patientProfile } = await requirePatientProfile();
   const days = intValue(formData, "days", 7);
+  const narrative = await generatePatientNarrative(patientProfile.id, days);
   const endDate = new Date();
   const startDate = new Date(endDate);
   startDate.setDate(endDate.getDate() - days);
@@ -498,8 +500,8 @@ export async function generateDoctorReportAction(formData: FormData) {
       patientId: patientProfile.id,
       startDate,
       endDate,
-      summary: `Last ${days} days: ${adherence}% dose adherence, ${hydrationAverage} oz average hydration, ${proteinAverage} g average protein. ${disclaimer}`,
-      flagsSummary: riskFlags.map((flag) => `${riskLevelToSummary(flag.level)}: ${flag.title}`).join("\n") || "No active flags in this period.",
+      summary: narrative.summary,
+      flagsSummary: narrative.flagsSummary || riskFlags.map((flag) => `${riskLevelToSummary(flag.level)}: ${flag.title}`).join("\n") || "No active flags in this period.",
       reportData: {
         days,
         medication: plan ? `${plan.medication}${plan.customName ? ` (${plan.customName})` : ""}` : "No active plan",
@@ -510,8 +512,11 @@ export async function generateDoctorReportAction(formData: FormData) {
         proteinAverage,
         symptomLogs: symptoms.length,
         patientNotes: notes,
-        discussionTopics,
+        discussionTopics: narrative.discussionPoints.length ? narrative.discussionPoints : discussionTopics,
         riskFlags: riskFlags.map((flag) => ({ title: flag.title, level: flag.level, description: flag.description })),
+        narrativeSummary: narrative.summary,
+        narrativeSections: formatNarrativeForUI(narrative),
+        flagsSummary: narrative.flagsSummary,
         disclaimer,
       },
     },

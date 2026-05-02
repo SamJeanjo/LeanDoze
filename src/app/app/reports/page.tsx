@@ -22,6 +22,7 @@ export default async function DoctorReportsPage() {
         patientNotes?: string[];
         discussionTopics?: string[];
         riskFlags?: Array<{ title: string; level: string; description: string }>;
+        narrativeSections?: Array<{ title: string; items: string[] }>;
       }
     | undefined;
 
@@ -82,6 +83,24 @@ export default async function DoctorReportsPage() {
           <div className="mt-8 rounded-2xl bg-[#FFF7ED] p-4 text-sm leading-6 text-slate-700 ring-1 ring-orange-100">
             {reportDisclaimer}
           </div>
+
+          {data?.narrativeSections?.length ? (
+            <section className="mt-8 rounded-[22px] border border-[#E2E8F0]/80 bg-white p-5">
+              <h3 className="text-lg font-semibold text-[#050816]">Clinical narrative</h3>
+              <div className="mt-4 grid gap-4 md:grid-cols-2">
+                {data.narrativeSections.slice(0, 6).map((section) => (
+                  <div key={section.title} className="rounded-2xl bg-[#F8FAFC] p-4 ring-1 ring-[#E2E8F0]">
+                    <p className="font-semibold text-[#0B1220]">{section.title}</p>
+                    <div className="mt-3 space-y-2">
+                      {section.items.slice(0, 4).map((item) => (
+                        <p key={item} className="text-sm leading-6 text-[#64748B]">{item}</p>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </section>
+          ) : null}
 
           <div className="mt-8 grid gap-5 lg:grid-cols-2">
             <section className="rounded-[22px] border border-[#E2E8F0]/80 bg-white p-5">

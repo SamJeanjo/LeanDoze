@@ -6,6 +6,7 @@ import { ClinicLayout } from "@/components/layout";
 import { ProgressBar } from "@/components/progress";
 import { StatusBadge } from "@/components/status-badge";
 import { getClinicPatient } from "@/lib/app-data";
+import { formatNarrativeForUI, generatePatientNarrative } from "@/lib/report-narrative";
 
 export const dynamic = "force-dynamic";
 
@@ -24,6 +25,8 @@ export default async function PatientDetail({ params }: { params: { id: string }
     notFound();
   }
 
+  const narrative = await generatePatientNarrative(patient.id, 7);
+  const narrativeSections = formatNarrativeForUI(narrative);
   const plan = patient.medicationPlans[0];
   const proteinAvg = average(patient.nutritionLogs.map((log) => log.proteinGrams ?? 0));
   const hydrationAvg = average(patient.hydrationLogs.map((log) => log.ounces));
@@ -91,6 +94,34 @@ export default async function PatientDetail({ params }: { params: { id: string }
           <MetricCard label="Flags" value={`${openFlags.length}`} helper="open review items" progress={Math.min(100, openFlags.length * 20)} icon={MessageSquareText} tone={openFlags.length ? "coral" : "green"} />
           <MetricCard label="Reports" value={`${patient.doctorReports.length}`} helper="generated summaries" progress={Math.min(100, patient.doctorReports.length * 25)} icon={MessageSquareText} />
         </div>
+
+        <section className="mt-5 rounded-[1.5rem] border border-slate-200 bg-white p-6 shadow-sm">
+          <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-start">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-[0.22em] text-[#0F766E]">Clinical summary</p>
+              <h2 className="mt-2 text-xl font-semibold text-slate-950">Last 7 days, clinician-ready narrative</h2>
+              <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-500">
+                Auto-generated from connected logs and risk flags. Review with the care team before acting on any pattern.
+              </p>
+            </div>
+            <StatusBadge tone={openFlags.length ? "amber" : "green"}>{openFlags.length ? "Review with clinician" : "On track"}</StatusBadge>
+          </div>
+          <div className="mt-5 grid gap-4 lg:grid-cols-3">
+            {narrativeSections.slice(0, 6).map((section) => (
+              <div key={section.title} className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                <h3 className="font-semibold text-slate-950">{section.title}</h3>
+                <div className="mt-3 space-y-2">
+                  {section.items.slice(0, 4).map((item) => (
+                    <p key={item} className="text-sm leading-6 text-slate-600">{item}</p>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="mt-5 rounded-2xl bg-[#FFF7ED] p-4 text-sm leading-6 text-slate-700 ring-1 ring-orange-100">
+            This summary is for clinical review. LeanDoze does not provide medical advice.
+          </div>
+        </section>
 
         <div className="mt-5 grid gap-5 lg:grid-cols-[0.9fr_1.1fr]">
           <section className="rounded-[1.5rem] border border-slate-200 bg-white p-6 shadow-sm">
