@@ -262,8 +262,8 @@ export default async function PatientDashboard() {
         action={<StatusBadge tone={primaryStatus.tone as "green" | "amber" | "coral"}>{primaryStatus.label}</StatusBadge>}
         activePath="/app/dashboard"
       >
-        <div className="grid gap-6 xl:grid-cols-[minmax(0,1.55fr)_minmax(360px,0.95fr)]">
-          <main className="space-y-6">
+        <div className="grid gap-5 sm:gap-6">
+          <main className="space-y-5 sm:space-y-6">
             {needsDoseAwareness ? (
               <section className="rounded-[22px] border border-amber-200 bg-amber-50 p-5 text-amber-900 shadow-[0_12px_35px_rgba(146,64,14,0.08)]">
                 <div className="flex items-start gap-3">
@@ -276,7 +276,7 @@ export default async function PatientDashboard() {
               </section>
             ) : null}
 
-            <section className="relative overflow-hidden rounded-[28px] border border-[#E2E8F0]/80 bg-white p-8 shadow-[0_28px_80px_rgba(15,23,42,0.08)] before:pointer-events-none before:absolute before:inset-0 before:rounded-[28px] before:bg-gradient-to-b before:from-white before:to-transparent">
+            <section className="relative overflow-hidden rounded-[28px] border border-[#E2E8F0]/80 bg-white p-5 shadow-[0_28px_80px_rgba(15,23,42,0.08)] before:pointer-events-none before:absolute before:inset-0 before:rounded-[28px] before:bg-gradient-to-b before:from-white before:to-transparent sm:p-8">
               <div className="relative z-10 flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
                 <div>
                   <div className="inline-flex items-center gap-3 rounded-full bg-teal-50 px-3 py-1 text-xs font-bold uppercase tracking-[0.26em] text-[#0F766E] ring-1 ring-teal-100">
@@ -313,7 +313,7 @@ export default async function PatientDashboard() {
                       </div>
                       <div className="flex shrink-0 items-center gap-2">
                         <span className={cn("hidden items-center rounded-full border px-3 py-1 text-xs font-semibold sm:inline-flex", style.badge)}>{item.status}</span>
-                        <Link href={item.href} className="rounded-full bg-[#0B1220] px-3 py-2 text-xs font-semibold text-white transition hover:-translate-y-0.5 hover:shadow-[0_12px_24px_rgba(11,18,32,0.18)]">
+                        <Link href={item.href} className="inline-flex min-h-11 items-center justify-center rounded-full bg-[#0B1220] px-4 text-xs font-semibold text-white transition hover:-translate-y-0.5 hover:shadow-[0_12px_24px_rgba(11,18,32,0.18)]">
                           {item.action}
                         </Link>
                       </div>
@@ -323,7 +323,7 @@ export default async function PatientDashboard() {
               </div>
             </section>
 
-            <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            <section className="grid gap-3 sm:grid-cols-2">
               {metrics.map((metric) => (
                 <div key={metric.label} className="relative overflow-hidden rounded-[22px] border border-[#E2E8F0]/80 bg-white p-5 shadow-[0_12px_35px_rgba(15,23,42,0.055)] transition-all duration-300 ease-out hover:-translate-y-0.5">
                   <div className="flex items-start justify-between gap-4">
@@ -344,8 +344,8 @@ export default async function PatientDashboard() {
             </section>
           </main>
 
-          <aside className="space-y-6">
-            <section className="relative overflow-hidden rounded-[28px] border border-white/10 bg-[#0B1220] p-8 text-white shadow-[0_28px_80px_rgba(15,23,42,0.22)]">
+          <aside className="space-y-5 sm:space-y-6">
+            <section className="relative overflow-hidden rounded-[28px] border border-white/10 bg-[#0B1220] p-5 text-white shadow-[0_28px_80px_rgba(15,23,42,0.22)] sm:p-8">
               <p className="text-xs font-bold uppercase tracking-[0.28em] text-[#7EE6D6]">Primary status</p>
               <h2 className="mt-3 text-2xl font-semibold tracking-[-0.03em] text-white">{primaryStatus.title}</h2>
               <p className="mt-3 text-sm leading-6 text-slate-300">{primaryStatus.explanation}</p>
