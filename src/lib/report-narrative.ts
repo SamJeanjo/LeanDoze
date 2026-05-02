@@ -2,9 +2,11 @@ import { RiskFlagStatus, SymptomSeverity } from "@prisma/client";
 import { getDb } from "@/lib/db";
 
 export type PatientNarrative = {
-  summary: string;
-  flagsSummary: string;
+  rangeLabel: string;
+  overall: string;
+  keyPatterns: string[];
   discussionPoints: string[];
+  disclaimer: string;
 };
 
 export type NarrativeSection = {
@@ -136,9 +138,11 @@ export async function generatePatientNarrative(patientId: string, days = 7): Pro
 
   if (!patient) {
     return {
-      summary: `No patient data found.\n\nNote:\n${disclaimer}`,
-      flagsSummary: "No active flags.",
+      rangeLabel: `Last ${days} days`,
+      overall: "No patient data found.",
+      keyPatterns: [],
       discussionPoints: ["Confirm patient access and report period."],
+      disclaimer,
     };
   }
 
@@ -164,101 +168,43 @@ export async function generatePatientNarrative(patientId: string, days = 7): Pro
   ];
   const activeFlags = patient.riskFlags.map((flag) => `${flag.title} (${flag.level})`);
   const discussionPoints = [
-    ...(lowHydrationDays ? ["hydration strategy"] : []),
-    ...(lowProteinDays ? ["protein intake"] : []),
-    ...(patient.symptomLogs.some((log) => log.nausea !== SymptomSeverity.NONE) ? ["nausea pattern after dose"] : []),
-    ...(weeklyRate !== null && weeklyRate < -2 ? ["pace of weight change"] : []),
-    ...(activeFlags.length ? ["active risk flags"] : []),
+    ...(lowHydrationDays ? ["Consider discussing hydration strategy."] : []),
+    ...(lowProteinDays ? ["Consider discussing protein intake."] : []),
+    ...(patient.symptomLogs.some((log) => log.nausea !== SymptomSeverity.NONE) ? ["Monitor pattern of nausea around dose timing."] : []),
+    ...(weeklyRate !== null && weeklyRate < -2 ? ["Consider discussing pace of weight change."] : []),
+    ...(activeFlags.length ? ["Review active risk flags with clinician."] : []),
+  ];
+  const adherencePattern = patient.doseLogs.length
+    ? `${dosesTaken} of ${patient.doseLogs.length} logged doses taken${missedDoses ? `; ${missedDoses} missed` : ""}${delayedDoses ? `; ${delayedDoses} delayed` : ""}.`
+    : "No scheduled dose logs in this period.";
+  const weightPattern = weightChange !== null
+    ? `${weightChange < 0 ? "Down" : weightChange > 0 ? "Up" : "No change"} ${Math.abs(weightChange).toFixed(1)} lb in this period${weeklyRate !== null ? ` (${weeklyRate.toFixed(1)} lb/week)` : ""}.`
+    : "Not enough weight data for trend.";
+  const keyPatterns = [
+    adherencePattern,
+    ...(patient.weightLogs.length >= 2 ? [weightPattern] : []),
+    `Protein average ${proteinAverage}g vs ${patient.proteinGoalGrams}g goal.`,
+    `Hydration average ${hydrationAverage}oz vs ${patient.hydrationGoalOz}oz goal${lowHydrationDays ? `; ${lowHydrationDays} low day${lowHydrationDays === 1 ? "" : "s"}.` : "."}`,
+    ...(lowProteinDays ? [`Protein below 60% target on ${lowProteinDays} day${lowProteinDays === 1 ? "" : "s"}.`] : []),
+    ...symptomLines,
+    energyTrend(patient.dailyCheckIns),
+    ...(activeFlags.length ? activeFlags.map((flag) => `Active flag: ${flag}.`) : ["No active flags."]),
   ];
 
-  const summary = [
-    `${patientName(patient)} - ${medicationLabel(plan)}`,
-    "",
-    "Adherence:",
-    patient.doseLogs.length
-      ? `- ${dosesTaken} of ${patient.doseLogs.length} logged doses taken`
-      : "- No scheduled dose logs in this period",
-    delayedDoses ? `- ${delayedDoses} delayed dose${delayedDoses === 1 ? "" : "s"}` : "- no delayed doses logged",
-    missedDoses ? `- ${missedDoses} missed dose${missedDoses === 1 ? "" : "s"}` : "- otherwise consistent",
-    "",
-    "Weight:",
-    weightChange !== null
-      ? `- ${weightChange < 0 ? "Down" : weightChange > 0 ? "Up" : "No change"} ${Math.abs(weightChange).toFixed(1)} lb in this period`
-      : "- Not enough weight data",
-    weeklyRate !== null ? `- weekly rate ${weeklyRate.toFixed(1)} lb/week` : "- weekly rate unavailable",
-    "",
-    "Nutrition:",
-    `- Protein average ${proteinAverage}g vs ${patient.proteinGoalGrams}g goal`,
-    `- Hydration average ${hydrationAverage}oz vs ${patient.hydrationGoalOz}oz goal`,
-    lowHydrationDays ? `- Hydration below 60% target on ${lowHydrationDays} day${lowHydrationDays === 1 ? "" : "s"}` : "- Hydration generally consistent",
-    "",
-    "Symptoms:",
-    ...symptomLines.map((line) => `- ${line}`),
-    "",
-    "Energy:",
-    `- ${energyTrend(patient.dailyCheckIns)}`,
-    "",
-    "Flags:",
-    ...(activeFlags.length ? activeFlags.map((flag) => `- ${flag}`) : ["- No active flags"]),
-    "",
-    "Suggested discussion:",
-    ...(discussionPoints.length ? discussionPoints.map((point) => `- ${point}`) : ["- continue monitoring current pattern"]),
-    "",
-    "Note:",
-    disclaimer,
-  ].join("\n");
-
   return {
-    summary,
-    flagsSummary: activeFlags.join("\n") || "No active flags.",
-    discussionPoints: discussionPoints.length ? discussionPoints : ["continue monitoring current pattern"],
+    rangeLabel: `Last ${days} days`,
+    overall: `${patientName(patient)} - ${medicationLabel(plan)}. ${adherencePattern} ${weightPattern} Review with clinician before acting on patterns.`,
+    keyPatterns,
+    discussionPoints: discussionPoints.length ? discussionPoints : ["Continue to monitor pattern."],
+    disclaimer,
   };
 }
 
 export function formatNarrativeForUI(narrative: PatientNarrative): NarrativeSection[] {
-  const rawSections: NarrativeSection[] = [];
-  let current: NarrativeSection | null = null;
-
-  for (const rawLine of narrative.summary.split("\n")) {
-    const line = rawLine.trim();
-
-    if (!line) {
-      continue;
-    }
-
-    if (line.endsWith(":")) {
-      current = { title: line.slice(0, -1), items: [] };
-      rawSections.push(current);
-      continue;
-    }
-
-    if (!current) {
-      current = { title: "Summary", items: [] };
-      rawSections.push(current);
-    }
-
-    current.items.push(line.replace(/^- /, ""));
-  }
-
-  const itemsFor = (title: string) => rawSections.find((section) => section.title === title)?.items ?? [];
-  const overall = [
-    ...itemsFor("Summary"),
-    ...itemsFor("Adherence").slice(0, 2),
-    ...itemsFor("Weight").slice(0, 1),
-  ];
-  const keyPatterns = [
-    ...itemsFor("Nutrition"),
-    ...itemsFor("Symptoms").filter((item) => !item.toLowerCase().startsWith("no ")).slice(0, 4),
-    ...itemsFor("Energy").slice(0, 1),
-    ...itemsFor("Flags").filter((item) => item !== "No active flags").slice(0, 4),
-  ];
-  const discussionPoints = narrative.discussionPoints.length ? narrative.discussionPoints : itemsFor("Suggested discussion");
-  const disclaimerItems = itemsFor("Note");
-
   return [
-    { title: "Overall", items: overall.length ? overall : ["Not enough patient data yet."] },
-    { title: "Key patterns", items: keyPatterns.length ? keyPatterns : ["No major patterns detected in the selected period."] },
-    { title: "Discussion points", items: discussionPoints.length ? discussionPoints : ["continue monitoring current pattern"] },
-    { title: "Disclaimer", items: disclaimerItems.length ? disclaimerItems : [disclaimer] },
+    { title: "Overall", items: [narrative.overall] },
+    { title: "Key patterns", items: narrative.keyPatterns.length ? narrative.keyPatterns : ["No major patterns detected in the selected period."] },
+    { title: "Discussion points", items: narrative.discussionPoints.length ? narrative.discussionPoints : ["Continue to monitor pattern."] },
+    { title: "Disclaimer", items: [narrative.disclaimer] },
   ];
 }

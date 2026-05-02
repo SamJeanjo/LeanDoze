@@ -1,10 +1,10 @@
 import { Download, FileText } from "lucide-react";
-import { ClinicalNarrativeCard } from "@/components/clinical-narrative-card";
+import { ClinicalSummaryCard } from "@/components/clinic/ClinicalSummaryCard";
 import { PatientLayout } from "@/components/layout";
 import { StatusBadge } from "@/components/status-badge";
 import { generateDoctorReportAction } from "@/lib/app-actions";
 import { getPatientAppState, reportDisclaimer } from "@/lib/app-data";
-import { formatNarrativeForUI, generatePatientNarrative } from "@/lib/report-narrative";
+import { generatePatientNarrative } from "@/lib/report-narrative";
 
 export const dynamic = "force-dynamic";
 
@@ -12,7 +12,6 @@ export default async function DoctorReportsPage({ searchParams }: { searchParams
   const { patientProfile } = await getPatientAppState();
   const narrativeDays = searchParams?.narrativeDays === "30" ? 30 : 7;
   const narrative = patientProfile ? await generatePatientNarrative(patientProfile.id, narrativeDays) : null;
-  const narrativeSections = narrative ? formatNarrativeForUI(narrative) : [];
   const hasNarrativeData = Boolean(patientProfile?.dailyCheckIns.length || patientProfile?.nutritionLogs.length || patientProfile?.hydrationLogs.length || patientProfile?.symptomLogs.length || patientProfile?.weightLogs.length);
   const reports = patientProfile?.doctorReports ?? [];
   const activeReport = reports[0];
@@ -28,7 +27,13 @@ export default async function DoctorReportsPage({ searchParams }: { searchParams
         patientNotes?: string[];
         discussionTopics?: string[];
         riskFlags?: Array<{ title: string; level: string; description: string }>;
-        narrativeSections?: Array<{ title: string; items: string[] }>;
+        narrative?: {
+          rangeLabel: string;
+          overall: string;
+          keyPatterns: string[];
+          discussionPoints: string[];
+          disclaimer: string;
+        };
       }
     | undefined;
 
@@ -92,10 +97,8 @@ export default async function DoctorReportsPage({ searchParams }: { searchParams
 
           {narrative ? (
             <div className="mt-8">
-              <ClinicalNarrativeCard
+              <ClinicalSummaryCard
                 narrative={narrative}
-                sections={narrativeSections}
-                days={narrativeDays}
                 hasData={hasNarrativeData}
                 addToReportAction={
                   <form action={generateDoctorReportAction}>

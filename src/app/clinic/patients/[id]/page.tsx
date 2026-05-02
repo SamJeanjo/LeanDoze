@@ -2,12 +2,12 @@ import { notFound } from "next/navigation";
 import { RiskFlagStatus } from "@prisma/client";
 import { Download, MessageSquareText } from "lucide-react";
 import { MetricCard } from "@/components/cards";
-import { ClinicalNarrativeCard } from "@/components/clinical-narrative-card";
+import { ClinicalSummaryCard } from "@/components/clinic/ClinicalSummaryCard";
 import { ClinicLayout } from "@/components/layout";
 import { ProgressBar } from "@/components/progress";
 import { StatusBadge } from "@/components/status-badge";
 import { getClinicPatient } from "@/lib/app-data";
-import { formatNarrativeForUI, generatePatientNarrative } from "@/lib/report-narrative";
+import { generatePatientNarrative } from "@/lib/report-narrative";
 
 export const dynamic = "force-dynamic";
 
@@ -28,7 +28,6 @@ export default async function PatientDetail({ params, searchParams }: { params: 
 
   const narrativeDays = searchParams?.narrativeDays === "30" ? 30 : 7;
   const narrative = await generatePatientNarrative(patient.id, narrativeDays);
-  const narrativeSections = formatNarrativeForUI(narrative);
   const hasNarrativeData = Boolean(patient.dailyCheckIns.length || patient.nutritionLogs.length || patient.hydrationLogs.length || patient.symptomLogs.length || patient.weightLogs.length || patient.doseLogs.length);
   const plan = patient.medicationPlans[0];
   const proteinAvg = average(patient.nutritionLogs.map((log) => log.proteinGrams ?? 0));
@@ -99,10 +98,8 @@ export default async function PatientDetail({ params, searchParams }: { params: 
         </div>
 
         <div className="mt-5">
-          <ClinicalNarrativeCard
+          <ClinicalSummaryCard
             narrative={narrative}
-            sections={narrativeSections}
-            days={narrativeDays}
             hasData={hasNarrativeData}
             addToReportAction={
               <a href="/clinic/reports" className="inline-flex min-h-11 items-center justify-center rounded-full bg-[#0B1220] px-4 text-sm font-semibold text-white shadow-[0_12px_28px_rgba(11,18,32,0.16)] transition hover:-translate-y-0.5">
