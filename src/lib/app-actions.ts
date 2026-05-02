@@ -26,6 +26,14 @@ function textValue(formData: FormData, key: string) {
   return String(formData.get(key) ?? "").trim();
 }
 
+function normalizedEmailValue(formData: FormData, key = "email") {
+  return textValue(formData, key).toLowerCase();
+}
+
+function isValidEmail(email: string) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+
 function numberValue(formData: FormData, key: string, fallback = 0) {
   const value = Number.parseFloat(textValue(formData, key));
   return Number.isFinite(value) ? value : fallback;
@@ -158,6 +166,17 @@ async function requirePatientProfile() {
   }
 
   return { db, user, patientProfile };
+}
+
+async function requireClinicMembership() {
+  const { db, user } = await requireUser();
+  const membership = await db.clinicMembership.findFirst({ where: { userId: user.id } });
+
+  if (!membership || (user.role !== UserRole.CLINIC_ADMIN && user.role !== UserRole.CLINIC_STAFF)) {
+    redirect("/app/dashboard");
+  }
+
+  return { db, user, membership };
 }
 
 export async function selectRoleAction(formData: FormData) {
@@ -509,17 +528,52 @@ export async function inviteDoctorAction(formData: FormData) {
   redirect("/app/invite-doctor?sent=1");
 }
 
-export async function invitePatientAction(formData: FormData) {
-  const { db, user } = await requireUser();
-  const membership = await db.clinicMembership.findFirst({ where: { userId: user.id } });
-  const email = textValue(formData, "email").toLowerCase();
+export type InvitePatientState = {
+  success: boolean;
+  code?: "INVITE_SENT" | "INVITE_ALREADY_PENDING" | "INVALID_EMAIL";
+  message: string;
+  email?: string;
+  inviteId?: string;
+};
+
+export async function invitePatientAction(
+  _previousState: InvitePatientState,
+  formData: FormData,
+): Promise<InvitePatientState> {
+  const { db, user, membership } = await requireClinicMembership();
+  const email = normalizedEmailValue(formData);
   const token = randomBytes(32).toString("base64url");
 
-  if (!membership) {
-    redirect("/app/dashboard");
+  if (!isValidEmail(email)) {
+    return {
+      success: false,
+      code: "INVALID_EMAIL",
+      message: "Enter a valid patient email.",
+      email,
+    };
   }
 
-  await db.patientInvite.create({
+  const existingPendingInvite = await db.patientInvite.findFirst({
+    where: {
+      email,
+      clinicId: membership.clinicId,
+      type: InviteType.CLINIC_TO_PATIENT,
+      status: InviteStatus.PENDING,
+    },
+    orderBy: { createdAt: "desc" },
+  });
+
+  if (existingPendingInvite) {
+    return {
+      success: false,
+      code: "INVITE_ALREADY_PENDING",
+      message: "This patient already has a pending invite.",
+      email,
+      inviteId: existingPendingInvite.id,
+    };
+  }
+
+  const invite = await db.patientInvite.create({
     data: {
       type: InviteType.CLINIC_TO_PATIENT,
       status: InviteStatus.PENDING,
@@ -534,7 +588,52 @@ export async function invitePatientAction(formData: FormData) {
   await sendInviteEmail(email, `${appUrl()}/invite/${token}`);
 
   revalidatePath("/clinic/invite-patient");
-  redirect("/clinic/invite-patient?sent=1");
+  return {
+    success: true,
+    code: "INVITE_SENT",
+    message: `Invite sent to ${email}`,
+    email,
+    inviteId: invite.id,
+  };
+}
+
+export async function resendPatientInviteAction(formData: FormData) {
+  const { db, membership } = await requireClinicMembership();
+  const inviteId = textValue(formData, "inviteId");
+  const invite = await db.patientInvite.findFirst({
+    where: {
+      id: inviteId,
+      clinicId: membership.clinicId,
+      type: InviteType.CLINIC_TO_PATIENT,
+      status: InviteStatus.PENDING,
+    },
+  });
+
+  if (invite) {
+    await sendInviteEmail(invite.email, `${appUrl()}/invite/${invite.token}`);
+  }
+
+  revalidatePath("/clinic/invite-patient");
+}
+
+export async function revokePatientInviteAction(formData: FormData) {
+  const { db, membership } = await requireClinicMembership();
+  const inviteId = textValue(formData, "inviteId");
+
+  await db.patientInvite.updateMany({
+    where: {
+      id: inviteId,
+      clinicId: membership.clinicId,
+      type: InviteType.CLINIC_TO_PATIENT,
+      status: InviteStatus.PENDING,
+    },
+    data: {
+      status: InviteStatus.REVOKED,
+      revokedAt: new Date(),
+    },
+  });
+
+  revalidatePath("/clinic/invite-patient");
 }
 
 export async function acceptInviteAction(formData: FormData) {
