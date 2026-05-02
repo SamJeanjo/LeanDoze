@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { RiskFlagStatus } from "@prisma/client";
 import { Download, MessageSquareText } from "lucide-react";
 import { MetricCard } from "@/components/cards";
 import { ClinicLayout } from "@/components/layout";
@@ -29,6 +30,14 @@ export default async function PatientDetail({ params }: { params: { id: string }
   const adherence = patient.doseLogs.length
     ? Math.round((patient.doseLogs.filter((dose) => dose.taken).length / patient.doseLogs.length) * 100)
     : 100;
+  const openFlags = patient.riskFlags.filter((flag) => flag.status === RiskFlagStatus.OPEN);
+  const resolvedFlags = patient.riskFlags.filter((flag) => flag.status === RiskFlagStatus.RESOLVED);
+  const groupedOpenFlags = {
+    URGENT: openFlags.filter((flag) => flag.level === "URGENT"),
+    HIGH: openFlags.filter((flag) => flag.level === "HIGH"),
+    MEDIUM: openFlags.filter((flag) => flag.level === "MEDIUM"),
+    LOW: openFlags.filter((flag) => flag.level === "LOW" || flag.level === "INFO"),
+  };
 
   return (
     <div>
@@ -79,7 +88,7 @@ export default async function PatientDetail({ params }: { params: { id: string }
         <div className="mt-5 grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
           <MetricCard label="Protein" value={`${proteinAvg}g`} helper="7-log average" progress={Math.min(100, proteinAvg)} icon={MessageSquareText} />
           <MetricCard label="Hydration" value={`${hydrationAvg}oz`} helper="7-log average" progress={Math.min(100, hydrationAvg)} icon={MessageSquareText} />
-          <MetricCard label="Flags" value={`${patient.riskFlags.length}`} helper="open review items" progress={Math.min(100, patient.riskFlags.length * 20)} icon={MessageSquareText} tone={patient.riskFlags.length ? "coral" : "green"} />
+          <MetricCard label="Flags" value={`${openFlags.length}`} helper="open review items" progress={Math.min(100, openFlags.length * 20)} icon={MessageSquareText} tone={openFlags.length ? "coral" : "green"} />
           <MetricCard label="Reports" value={`${patient.doctorReports.length}`} helper="generated summaries" progress={Math.min(100, patient.doctorReports.length * 25)} icon={MessageSquareText} />
         </div>
 
@@ -99,19 +108,52 @@ export default async function PatientDetail({ params }: { params: { id: string }
             </div>
           </section>
           <section className="rounded-[1.5rem] border border-slate-200 bg-white p-6 shadow-sm">
-            <h2 className="text-xl font-semibold text-slate-950">Risk flags</h2>
-            <div className="mt-5 space-y-3">
-              {patient.riskFlags.map((flag) => (
-                <div key={flag.id} className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+            <div className="flex flex-col justify-between gap-2 sm:flex-row sm:items-start">
+              <div>
+                <h2 className="text-xl font-semibold text-slate-950">Risk flags</h2>
+                <p className="mt-1 text-sm text-slate-500">
+                  Last evaluated {patient.riskEvaluatedAt ? patient.riskEvaluatedAt.toLocaleString() : "after the next completed check-in"}.
+                </p>
+              </div>
+              <StatusBadge tone={openFlags.length ? "amber" : "green"}>{openFlags.length ? "Needs review" : "On track"}</StatusBadge>
+            </div>
+            <div className="mt-5 space-y-4">
+              {(["URGENT", "HIGH", "MEDIUM", "LOW"] as const).map((level) => (
+                <div key={level} className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
                   <div className="flex items-center justify-between gap-3">
-                    <p className="font-semibold text-slate-950">{flag.title}</p>
-                    <StatusBadge tone={flag.level === "URGENT" ? "coral" : "amber"}>{flag.level}</StatusBadge>
+                    <p className="text-sm font-bold uppercase tracking-[0.18em] text-slate-500">{level}</p>
+                    <StatusBadge tone={level === "URGENT" || level === "HIGH" ? "coral" : level === "MEDIUM" ? "amber" : "navy"}>
+                      {groupedOpenFlags[level].length}
+                    </StatusBadge>
                   </div>
-                  <p className="mt-2 text-sm leading-6 text-slate-600">{flag.description}</p>
-                  <p className="mt-3 text-sm font-semibold text-[#0F766E]">{flag.recommendation ?? "Review this with your clinician."}</p>
+                  <div className="mt-3 space-y-3">
+                    {groupedOpenFlags[level].map((flag) => (
+                      <div key={flag.id} className="rounded-xl bg-white p-4 ring-1 ring-slate-200">
+                        <p className="font-semibold text-slate-950">{flag.title}</p>
+                        <p className="mt-2 text-sm leading-6 text-slate-600">{flag.description}</p>
+                        <p className="mt-3 text-sm font-semibold text-[#0F766E]">{flag.recommendation ?? "Review this with your clinician."}</p>
+                      </div>
+                    ))}
+                    {!groupedOpenFlags[level].length ? <p className="text-sm text-slate-500">No open {level.toLowerCase()} flags.</p> : null}
+                  </div>
                 </div>
               ))}
-              {!patient.riskFlags.length ? <p className="text-sm text-slate-500">No active risk flags.</p> : null}
+
+              <div className="rounded-2xl border border-slate-200 bg-white p-4">
+                <h3 className="font-semibold text-slate-950">Resolved history</h3>
+                <div className="mt-3 space-y-2">
+                  {resolvedFlags.slice(0, 5).map((flag) => (
+                    <div key={flag.id} className="flex items-start justify-between gap-3 rounded-xl bg-slate-50 p-3 text-sm">
+                      <div>
+                        <p className="font-semibold text-slate-800">{flag.title}</p>
+                        <p className="mt-1 text-slate-500">{flag.source}</p>
+                      </div>
+                      <span className="shrink-0 text-xs font-semibold text-slate-400">{flag.resolvedAt?.toLocaleDateString()}</span>
+                    </div>
+                  ))}
+                  {!resolvedFlags.length ? <p className="text-sm text-slate-500">No resolved flag history yet.</p> : null}
+                </div>
+              </div>
             </div>
           </section>
         </div>

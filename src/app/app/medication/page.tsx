@@ -1,7 +1,7 @@
 import { CalendarDays, Syringe } from "lucide-react";
 import { PatientLayout } from "@/components/layout";
 import { StatusBadge } from "@/components/status-badge";
-import { saveMedicationPlanAction } from "@/lib/app-actions";
+import { markDoseStatusAction, saveMedicationPlanAction } from "@/lib/app-actions";
 import { getPatientAppState } from "@/lib/app-data";
 
 export const dynamic = "force-dynamic";
@@ -92,6 +92,27 @@ export default async function MedicationPlanPage() {
                 </div>
               </div>
             </div>
+            {plan ? (
+              <div className="mt-5 grid gap-3 sm:grid-cols-2">
+                <form action={markDoseStatusAction}>
+                  <input type="hidden" name="status" value="taken" />
+                  <input type="hidden" name="scheduledDate" value={plan.nextDoseDate?.toISOString().slice(0, 10) ?? new Date().toISOString().slice(0, 10)} />
+                  <button className="min-h-11 w-full rounded-full bg-[#0B1220] px-4 text-sm font-semibold text-white transition hover:-translate-y-0.5">
+                    Mark taken
+                  </button>
+                </form>
+                <form action={markDoseStatusAction}>
+                  <input type="hidden" name="status" value="missed" />
+                  <input type="hidden" name="scheduledDate" value={plan.nextDoseDate?.toISOString().slice(0, 10) ?? new Date().toISOString().slice(0, 10)} />
+                  <button className="min-h-11 w-full rounded-full border border-[#E2E8F0] bg-white px-4 text-sm font-semibold text-[#0B1220] transition hover:-translate-y-0.5 hover:bg-slate-50">
+                    Mark missed
+                  </button>
+                </form>
+              </div>
+            ) : null}
+            <p className="mt-4 text-sm leading-6 text-[#64748B]">
+              Dose logs update risk flags for reports. LeanDoze does not recommend medication changes.
+            </p>
           </section>
         </div>
       </PatientLayout>

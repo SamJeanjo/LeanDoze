@@ -139,7 +139,13 @@ function PatientQueueRow({ patient, priority }: { patient: ClinicPatient; priori
 export default async function ClinicDashboard() {
   const { clinic, patients } = await getClinicAppState();
   const alerts = patients.reduce((sum, patient) => sum + patient.riskFlags.length, 0);
-  const missedDosePatients = patients.filter((patient) => patient.doseLogs.some((dose) => dose.missed) || patient.riskFlags.some((flag) => flag.source === "dose-log")).length;
+  const missedDosePatients = patients.filter((patient) => patient.doseLogs.some((dose) => dose.missed) || patient.riskFlags.some((flag) => flag.source === "missed-dose")).length;
+  const severityCounts = {
+    urgent: patients.reduce((sum, patient) => sum + patient.riskFlags.filter((flag) => flag.level === "URGENT").length, 0),
+    high: patients.reduce((sum, patient) => sum + patient.riskFlags.filter((flag) => flag.level === "HIGH").length, 0),
+    medium: patients.reduce((sum, patient) => sum + patient.riskFlags.filter((flag) => flag.level === "MEDIUM").length, 0),
+    low: patients.reduce((sum, patient) => sum + patient.riskFlags.filter((flag) => flag.level === "LOW" || flag.level === "INFO").length, 0),
+  };
   const priorityGroups = {
     HIGH: patients.filter((patient) => priorityForPatient(patient) === "HIGH"),
     MEDIUM: patients.filter((patient) => priorityForPatient(patient) === "MEDIUM"),
@@ -163,7 +169,7 @@ export default async function ClinicDashboard() {
     >
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <MetricCard label="Connected patients" value={`${patients.length}`} helper="active PatientAccess grants" progress={Math.min(100, patients.length * 10)} icon={UsersRound} />
-        <MetricCard label="Risk flags" value={`${alerts}`} helper="Triggered by severe symptoms, missed dose, hydration/protein, or weight-change patterns." progress={Math.min(100, alerts * 12)} icon={AlertTriangle} tone={alerts ? "coral" : "mint"} />
+        <MetricCard label="Risk flags" value={`${alerts}`} helper={`Open flags: ${severityCounts.urgent} urgent, ${severityCounts.high} high, ${severityCounts.medium} medium, ${severityCounts.low} low.`} progress={Math.min(100, alerts * 12)} icon={AlertTriangle} tone={alerts ? "coral" : "mint"} />
         <MetricCard label="Missed doses" value={`${missedDosePatients}`} helper="Detected from patient dose logs or dose-related risk flags." progress={Math.min(100, missedDosePatients * 18)} icon={CalendarCheck} tone={missedDosePatients ? "coral" : "green"} />
         <MetricCard label="Recent activity" value={`${recentActivity.length}`} helper="latest check-ins, symptom changes, and missed dose logs" progress={Math.min(100, recentActivity.length * 12)} icon={Activity} tone="navy" />
       </div>

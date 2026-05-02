@@ -18,7 +18,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getDb } from "@/lib/db";
 import { generateGuidance } from "@/lib/guidance-engine";
-import { createRiskFlags } from "@/lib/risk-engine";
+import { evaluatePatientRisk } from "@/lib/risk-engine";
 
 const disclaimer =
   "LeanDoze does not provide medical advice. Review this report with your clinician.";
@@ -285,30 +285,8 @@ async function runPatientEngines(patientId: string) {
   const latestSymptoms = patient.symptomLogs[0];
   const today = new Date(new Date().toDateString());
   const latestDaily = patient.dailyCheckIns[0];
-  const latestDoseMissed = patient.doseLogs[0]?.missed ?? false;
-  const doseRecentlyIncreased = patient.medicationPlans[0]?.updatedAt
-    ? Date.now() - patient.medicationPlans[0].updatedAt.getTime() < 1000 * 60 * 60 * 24 * 14
-    : false;
   const hydrationLastDays = patient.hydrationLogs.map((log) => log.ounces);
   const proteinLastDays = patient.nutritionLogs.map((log) => log.proteinGrams ?? 0);
-
-  await createRiskFlags({
-    patientId,
-    hydrationGoalOz: patient.hydrationGoalOz,
-    proteinGoalGrams: patient.proteinGoalGrams,
-    currentWeightLb: patient.weightLogs[0]?.weightLb,
-    previousWeightLb: patient.weightLogs[1]?.weightLb,
-    latestDoseMissed,
-    doseRecentlyIncreased,
-    hydrationLastDays,
-    proteinLastDays,
-    symptomLastDays: patient.symptomLogs.map((log) => ({
-      nausea: log.nausea,
-      vomiting: log.vomiting,
-      constipation: log.constipation,
-      abdominalPain: log.abdominalPain,
-    })),
-  });
 
   const guidance = generateGuidance({
     date: today,
@@ -358,6 +336,8 @@ async function runPatientEngines(patientId: string) {
       },
     });
   }
+
+  await evaluatePatientRisk(patientId);
 }
 
 export async function saveDailyCheckInAction(formData: FormData) {
@@ -440,6 +420,41 @@ export async function saveDailyCheckInAction(formData: FormData) {
   revalidatePath("/app/dashboard");
   revalidatePath("/app/check-in");
   redirect("/app/dashboard?checkin=saved");
+}
+
+export async function markDoseStatusAction(formData: FormData) {
+  const { db, patientProfile } = await requirePatientProfile();
+  const plan = patientProfile.medicationPlans[0];
+  const status = textValue(formData, "status");
+  const scheduledDate = dateValue(formData, "scheduledDate", plan?.nextDoseDate ?? new Date());
+  const taken = status === "taken";
+  const missed = status === "missed";
+
+  await db.doseLog.create({
+    data: {
+      patientId: patientProfile.id,
+      medicationPlanId: plan?.id,
+      scheduledDate,
+      takenDate: taken ? new Date() : null,
+      doseMg: plan?.doseMg ?? 0,
+      taken,
+      missed,
+      notes: taken ? "Dose marked taken by patient." : "Dose marked missed by patient.",
+    },
+  });
+
+  if (plan?.id && taken) {
+    const nextDoseDate = new Date(scheduledDate);
+    nextDoseDate.setDate(nextDoseDate.getDate() + (plan.frequency === DoseFrequency.DAILY ? 1 : 7));
+    await db.medicationPlan.update({
+      where: { id: plan.id },
+      data: { nextDoseDate },
+    });
+  }
+
+  await evaluatePatientRisk(patientProfile.id);
+  revalidatePath("/app/dashboard");
+  revalidatePath("/app/medication");
 }
 
 export async function generateDoctorReportAction(formData: FormData) {

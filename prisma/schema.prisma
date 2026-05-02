@@ -135,6 +135,7 @@ model PatientProfile {
   proteinGoalGrams Int       @default(120)
   hydrationGoalOz  Int       @default(90)
   mainConcerns     String[]  @default([])
+  riskEvaluatedAt  DateTime?
 
   medicationPlans  MedicationPlan[]
   doseLogs         DoseLog[]
