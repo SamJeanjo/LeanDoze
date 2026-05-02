@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { RiskFlagStatus } from "@prisma/client";
 import { Download, MessageSquareText } from "lucide-react";
 import { MetricCard } from "@/components/cards";
+import { ClinicalNarrativeCard } from "@/components/clinical-narrative-card";
 import { ClinicLayout } from "@/components/layout";
 import { ProgressBar } from "@/components/progress";
 import { StatusBadge } from "@/components/status-badge";
@@ -18,15 +19,17 @@ function average(values: number[]) {
   return values.length ? Math.round(values.reduce((sum, value) => sum + value, 0) / values.length) : 0;
 }
 
-export default async function PatientDetail({ params }: { params: { id: string } }) {
+export default async function PatientDetail({ params, searchParams }: { params: { id: string }; searchParams?: { narrativeDays?: string } }) {
   const patient = await getClinicPatient(params.id);
 
   if (!patient) {
     notFound();
   }
 
-  const narrative = await generatePatientNarrative(patient.id, 7);
+  const narrativeDays = searchParams?.narrativeDays === "30" ? 30 : 7;
+  const narrative = await generatePatientNarrative(patient.id, narrativeDays);
   const narrativeSections = formatNarrativeForUI(narrative);
+  const hasNarrativeData = Boolean(patient.dailyCheckIns.length || patient.nutritionLogs.length || patient.hydrationLogs.length || patient.symptomLogs.length || patient.weightLogs.length || patient.doseLogs.length);
   const plan = patient.medicationPlans[0];
   const proteinAvg = average(patient.nutritionLogs.map((log) => log.proteinGrams ?? 0));
   const hydrationAvg = average(patient.hydrationLogs.map((log) => log.ounces));
@@ -95,33 +98,24 @@ export default async function PatientDetail({ params }: { params: { id: string }
           <MetricCard label="Reports" value={`${patient.doctorReports.length}`} helper="generated summaries" progress={Math.min(100, patient.doctorReports.length * 25)} icon={MessageSquareText} />
         </div>
 
-        <section className="mt-5 rounded-[1.5rem] border border-slate-200 bg-white p-6 shadow-sm">
-          <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-start">
-            <div>
-              <p className="text-xs font-bold uppercase tracking-[0.22em] text-[#0F766E]">Clinical summary</p>
-              <h2 className="mt-2 text-xl font-semibold text-slate-950">Last 7 days, clinician-ready narrative</h2>
-              <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-500">
-                Auto-generated from connected logs and risk flags. Review with the care team before acting on any pattern.
-              </p>
-            </div>
-            <StatusBadge tone={openFlags.length ? "amber" : "green"}>{openFlags.length ? "Review with clinician" : "On track"}</StatusBadge>
-          </div>
-          <div className="mt-5 grid gap-4 lg:grid-cols-3">
-            {narrativeSections.slice(0, 6).map((section) => (
-              <div key={section.title} className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                <h3 className="font-semibold text-slate-950">{section.title}</h3>
-                <div className="mt-3 space-y-2">
-                  {section.items.slice(0, 4).map((item) => (
-                    <p key={item} className="text-sm leading-6 text-slate-600">{item}</p>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
-          <div className="mt-5 rounded-2xl bg-[#FFF7ED] p-4 text-sm leading-6 text-slate-700 ring-1 ring-orange-100">
-            This summary is for clinical review. LeanDoze does not provide medical advice.
-          </div>
-        </section>
+        <div className="mt-5">
+          <ClinicalNarrativeCard
+            narrative={narrative}
+            sections={narrativeSections}
+            days={narrativeDays}
+            hasData={hasNarrativeData}
+            addToReportAction={
+              <a href="/clinic/reports" className="inline-flex min-h-11 items-center justify-center rounded-full bg-[#0B1220] px-4 text-sm font-semibold text-white shadow-[0_12px_28px_rgba(11,18,32,0.16)] transition hover:-translate-y-0.5">
+                Add to report
+              </a>
+            }
+            generateThirtyDayAction={
+              <a href={`/clinic/patients/${patient.id}?narrativeDays=30`} className="inline-flex min-h-11 items-center justify-center rounded-full border border-[#E2E8F0] bg-white/90 px-4 text-sm font-semibold text-[#0B1220] transition hover:-translate-y-0.5 hover:bg-white">
+                Generate 30-day version
+              </a>
+            }
+          />
+        </div>
 
         <div className="mt-5 grid gap-5 lg:grid-cols-[0.9fr_1.1fr]">
           <section className="rounded-[1.5rem] border border-slate-200 bg-white p-6 shadow-sm">

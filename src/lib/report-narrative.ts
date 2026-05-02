@@ -216,7 +216,7 @@ export async function generatePatientNarrative(patientId: string, days = 7): Pro
 }
 
 export function formatNarrativeForUI(narrative: PatientNarrative): NarrativeSection[] {
-  const sections: NarrativeSection[] = [];
+  const rawSections: NarrativeSection[] = [];
   let current: NarrativeSection | null = null;
 
   for (const rawLine of narrative.summary.split("\n")) {
@@ -228,18 +228,37 @@ export function formatNarrativeForUI(narrative: PatientNarrative): NarrativeSect
 
     if (line.endsWith(":")) {
       current = { title: line.slice(0, -1), items: [] };
-      sections.push(current);
+      rawSections.push(current);
       continue;
     }
 
     if (!current) {
       current = { title: "Summary", items: [] };
-      sections.push(current);
+      rawSections.push(current);
     }
 
     current.items.push(line.replace(/^- /, ""));
   }
 
-  return sections;
-}
+  const itemsFor = (title: string) => rawSections.find((section) => section.title === title)?.items ?? [];
+  const overall = [
+    ...itemsFor("Summary"),
+    ...itemsFor("Adherence").slice(0, 2),
+    ...itemsFor("Weight").slice(0, 1),
+  ];
+  const keyPatterns = [
+    ...itemsFor("Nutrition"),
+    ...itemsFor("Symptoms").filter((item) => !item.toLowerCase().startsWith("no ")).slice(0, 4),
+    ...itemsFor("Energy").slice(0, 1),
+    ...itemsFor("Flags").filter((item) => item !== "No active flags").slice(0, 4),
+  ];
+  const discussionPoints = narrative.discussionPoints.length ? narrative.discussionPoints : itemsFor("Suggested discussion");
+  const disclaimerItems = itemsFor("Note");
 
+  return [
+    { title: "Overall", items: overall.length ? overall : ["Not enough patient data yet."] },
+    { title: "Key patterns", items: keyPatterns.length ? keyPatterns : ["No major patterns detected in the selected period."] },
+    { title: "Discussion points", items: discussionPoints.length ? discussionPoints : ["continue monitoring current pattern"] },
+    { title: "Disclaimer", items: disclaimerItems.length ? disclaimerItems : [disclaimer] },
+  ];
+}

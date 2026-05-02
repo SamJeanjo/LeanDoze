@@ -111,6 +111,7 @@ export async function getClinicPatient(patientId: string) {
           hydrationLogs: { orderBy: { loggedAt: "desc" }, take: 7 },
           nutritionLogs: { orderBy: { loggedAt: "desc" }, take: 7 },
           symptomLogs: { orderBy: { loggedAt: "desc" }, take: 8 },
+          dailyCheckIns: { orderBy: { checkInDate: "desc" }, take: 7 },
           riskFlags: { orderBy: { createdAt: "desc" }, take: 25 },
           doctorReports: { orderBy: { createdAt: "desc" }, take: 3 },
         },

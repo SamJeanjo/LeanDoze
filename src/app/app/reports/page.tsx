@@ -1,13 +1,19 @@
 import { Download, FileText } from "lucide-react";
+import { ClinicalNarrativeCard } from "@/components/clinical-narrative-card";
 import { PatientLayout } from "@/components/layout";
 import { StatusBadge } from "@/components/status-badge";
 import { generateDoctorReportAction } from "@/lib/app-actions";
 import { getPatientAppState, reportDisclaimer } from "@/lib/app-data";
+import { formatNarrativeForUI, generatePatientNarrative } from "@/lib/report-narrative";
 
 export const dynamic = "force-dynamic";
 
-export default async function DoctorReportsPage() {
+export default async function DoctorReportsPage({ searchParams }: { searchParams?: { narrativeDays?: string } }) {
   const { patientProfile } = await getPatientAppState();
+  const narrativeDays = searchParams?.narrativeDays === "30" ? 30 : 7;
+  const narrative = patientProfile ? await generatePatientNarrative(patientProfile.id, narrativeDays) : null;
+  const narrativeSections = narrative ? formatNarrativeForUI(narrative) : [];
+  const hasNarrativeData = Boolean(patientProfile?.dailyCheckIns.length || patientProfile?.nutritionLogs.length || patientProfile?.hydrationLogs.length || patientProfile?.symptomLogs.length || patientProfile?.weightLogs.length);
   const reports = patientProfile?.doctorReports ?? [];
   const activeReport = reports[0];
   const data = activeReport?.reportData as
@@ -84,22 +90,28 @@ export default async function DoctorReportsPage() {
             {reportDisclaimer}
           </div>
 
-          {data?.narrativeSections?.length ? (
-            <section className="mt-8 rounded-[22px] border border-[#E2E8F0]/80 bg-white p-5">
-              <h3 className="text-lg font-semibold text-[#050816]">Clinical narrative</h3>
-              <div className="mt-4 grid gap-4 md:grid-cols-2">
-                {data.narrativeSections.slice(0, 6).map((section) => (
-                  <div key={section.title} className="rounded-2xl bg-[#F8FAFC] p-4 ring-1 ring-[#E2E8F0]">
-                    <p className="font-semibold text-[#0B1220]">{section.title}</p>
-                    <div className="mt-3 space-y-2">
-                      {section.items.slice(0, 4).map((item) => (
-                        <p key={item} className="text-sm leading-6 text-[#64748B]">{item}</p>
-                      ))}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </section>
+          {narrative ? (
+            <div className="mt-8">
+              <ClinicalNarrativeCard
+                narrative={narrative}
+                sections={narrativeSections}
+                days={narrativeDays}
+                hasData={hasNarrativeData}
+                addToReportAction={
+                  <form action={generateDoctorReportAction}>
+                    <input type="hidden" name="days" value={narrativeDays} />
+                    <button className="inline-flex min-h-11 items-center justify-center rounded-full bg-[#0B1220] px-4 text-sm font-semibold text-white shadow-[0_12px_28px_rgba(11,18,32,0.16)] transition hover:-translate-y-0.5">
+                      Add to report
+                    </button>
+                  </form>
+                }
+                generateThirtyDayAction={
+                  <a href="/app/reports?narrativeDays=30" className="inline-flex min-h-11 items-center justify-center rounded-full border border-[#E2E8F0] bg-white/90 px-4 text-sm font-semibold text-[#0B1220] transition hover:-translate-y-0.5 hover:bg-white">
+                    Generate 30-day version
+                  </a>
+                }
+              />
+            </div>
           ) : null}
 
           <div className="mt-8 grid gap-5 lg:grid-cols-2">
