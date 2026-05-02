@@ -7,7 +7,6 @@ import {
   InviteStatus,
   InviteType,
   MedicationName,
-  PatientAccessRole,
   Prisma,
   RiskFlagLevel,
   RiskFlagStatus,
@@ -18,6 +17,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getDb } from "@/lib/db";
 import { generateGuidance } from "@/lib/guidance-engine";
+import { acceptInvite as acceptInviteByToken } from "@/lib/invite-service";
 import { formatNarrativeForUI, generatePatientNarrative } from "@/lib/report-narrative";
 import { evaluatePatientRisk } from "@/lib/risk-engine";
 
@@ -719,52 +719,14 @@ export async function addClinicPatientNoteAction(formData: FormData) {
 
 export async function acceptInviteAction(formData: FormData) {
   const token = textValue(formData, "token");
-  const { db, user } = await requireUser();
-  const invite = await db.patientInvite.findUnique({ where: { token } });
+  const result = await acceptInviteByToken(token);
 
-  if (!invite || invite.status !== InviteStatus.PENDING || invite.expiresAt < new Date()) {
+  if (!result.success) {
     redirect(`/invite/${token}?status=unavailable`);
   }
-
-  let patientId = invite.patientId;
-  let clinicId = invite.clinicId;
-
-  if (invite.type === InviteType.CLINIC_TO_PATIENT) {
-    const patient = await db.patientProfile.findUnique({ where: { userId: user.id } });
-    if (!patient || !invite.clinicId) {
-      redirect("/app/medication");
-    }
-    patientId = patient.id;
-    clinicId = invite.clinicId;
-  }
-
-  if (invite.type === InviteType.PATIENT_TO_CLINIC) {
-    const membership = await db.clinicMembership.findFirst({ where: { userId: user.id } });
-    if (!membership || !invite.patientId) {
-      redirect("/clinic/dashboard");
-    }
-    patientId = invite.patientId;
-    clinicId = membership.clinicId;
-  }
-
-  if (!patientId || !clinicId) {
-    redirect(`/invite/${token}?status=unavailable`);
-  }
-
-  await db.$transaction([
-    db.patientAccess.upsert({
-      where: { patientId_clinicId: { patientId, clinicId } },
-      update: { revokedAt: null, role: PatientAccessRole.CLINICIAN, grantedByInviteId: invite.id },
-      create: { patientId, clinicId, role: PatientAccessRole.CLINICIAN, grantedByInviteId: invite.id },
-    }),
-    db.patientInvite.update({
-      where: { id: invite.id },
-      data: { status: InviteStatus.ACCEPTED, acceptedAt: new Date() },
-    }),
-  ]);
 
   revalidatePath("/clinic/patients");
-  redirect(invite.type === InviteType.CLINIC_TO_PATIENT ? "/app/dashboard" : "/clinic/patients");
+  redirect(result.redirectTo);
 }
 
 export async function revokePatientAccessAction(formData: FormData) {

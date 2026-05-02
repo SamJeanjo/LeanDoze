@@ -350,8 +350,9 @@ model PatientInvite {
   type   InviteType
   status InviteStatus @default(PENDING)
 
-  token String @unique
-  email String
+  token        String @unique
+  email        String
+  invitedEmail String @default("")
 
   patientId String?
   patient   PatientProfile? @relation(fields: [patientId], references: [id], onDelete: Cascade)

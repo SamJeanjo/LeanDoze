@@ -1,5 +1,7 @@
 import Link from "next/link";
+import { auth } from "@clerk/nextjs/server";
 import { CheckCircle2, ShieldCheck } from "lucide-react";
+import { redirect } from "next/navigation";
 import { Footer, Navbar } from "@/components/layout";
 import { StatusBadge } from "@/components/status-badge";
 import { acceptInviteAction } from "@/lib/app-actions";
@@ -8,12 +10,19 @@ import { getDb } from "@/lib/db";
 export const dynamic = "force-dynamic";
 
 export default async function InviteAcceptPage({ params }: { params: { token: string } }) {
+  const { userId } = await auth();
   const invite = await getDb().patientInvite.findUnique({
     where: { token: params.token },
     include: { clinic: true, patient: { include: { user: true } } },
   });
   const isClinicInvite = invite?.type === "CLINIC_TO_PATIENT";
   const unavailable = !invite || invite.status !== "PENDING" || invite.expiresAt < new Date();
+
+  if (!unavailable && !userId) {
+    const signInUrl = new URL("/sign-in", process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3010");
+    signInUrl.searchParams.set("redirect_url", `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3010"}/invite/${params.token}`);
+    redirect(signInUrl.toString());
+  }
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] text-[#0B1220]">

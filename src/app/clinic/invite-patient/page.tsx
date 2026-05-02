@@ -1,7 +1,8 @@
 import { ClinicLayout } from "@/components/layout";
 import { StatusBadge } from "@/components/status-badge";
-import { InvitePatientPanel } from "@/components/clinic/invite-patient-panel";
+import { InvitePanel } from "@/components/invites/invite-panel";
 import { getClinicAppState } from "@/lib/app-data";
+import { toInviteDto } from "@/lib/invite-service";
 
 export const dynamic = "force-dynamic";
 
@@ -25,7 +26,6 @@ export default async function InvitePatientPage() {
       }, new Map<string, (typeof allInvites)[number]>())
       .values(),
   ).slice(0, 8);
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3010");
 
   return (
     <div>
@@ -36,15 +36,17 @@ export default async function InvitePatientPage() {
         action={<StatusBadge tone="mint">Access required</StatusBadge>}
         activePath="/clinic/invite-patient"
       >
-        <InvitePatientPanel
-          baseUrl={baseUrl}
-          invites={latestInvitesByEmail.map((invite) => ({
-            id: invite.id,
-            email: invite.email,
-            status: invite.status,
-            expiresAt: invite.expiresAt.toLocaleDateString(),
-            token: invite.token,
-          }))}
+        <InvitePanel
+          type="CLINIC_TO_PATIENT"
+          title="Invite a patient"
+          eyebrow="Patient access"
+          emailLabel="Patient email"
+          emailPlaceholder="patient@example.com"
+          buttonLabel="Send patient invite"
+          emptyState="No patient invites yet. Send your first invite to connect a patient."
+          education="Patients must accept before your clinic can see their dashboard, reports, or risk flags."
+          clinicId={membership?.clinicId}
+          initialInvites={latestInvitesByEmail.map(toInviteDto)}
         />
       </ClinicLayout>
     </div>
