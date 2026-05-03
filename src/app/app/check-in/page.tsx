@@ -1,4 +1,4 @@
-import { AlertTriangle, Droplet, HeartPulse, Scale, Utensils } from "lucide-react";
+import { Activity, AlertTriangle, CheckCircle2, Droplet, HeartPulse, Scale, Utensils } from "lucide-react";
 import { PatientLayout } from "@/components/layout";
 import { StatusBadge } from "@/components/status-badge";
 import { saveDailyCheckInAction } from "@/lib/app-actions";
@@ -28,8 +28,19 @@ export default async function DailyCheckInPage() {
         action={<StatusBadge tone="mint">Review this with your clinician.</StatusBadge>}
         activePath="/app/check-in"
       >
-        <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
-          <form action={saveDailyCheckInAction} className="rounded-[28px] border border-[#E2E8F0]/80 bg-white p-8 shadow-[0_28px_80px_rgba(15,23,42,0.08)]">
+        <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_320px] xl:items-start">
+          <form action={saveDailyCheckInAction} className="rounded-[28px] border border-[#E2E8F0]/80 bg-white p-5 shadow-[0_24px_70px_rgba(15,23,42,0.075)] sm:p-6">
+            <div className="mb-5 flex items-start justify-between gap-4 rounded-[22px] border border-[#E2E8F0]/80 bg-[#F8FAFC]/80 p-4">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-[0.22em] text-[#0F766E]">Today</p>
+                <h2 className="mt-2 text-xl font-semibold tracking-[-0.03em] text-[#050816]">Quick check-in</h2>
+                <p className="mt-1 text-sm leading-6 text-[#64748B]">Log the essentials now. Details stay available for your report.</p>
+              </div>
+              <div className="hidden h-11 w-11 shrink-0 place-items-center rounded-2xl bg-[#ECFEFF] text-[#0F766E] ring-1 ring-[#99F6E4]/70 sm:grid">
+                <Activity className="h-5 w-5" />
+              </div>
+            </div>
+
             <div className="grid gap-4 sm:grid-cols-2">
               <label>
                 <span className="flex items-center gap-2 text-sm font-semibold text-[#0B1220]">
@@ -76,24 +87,30 @@ export default async function DailyCheckInPage() {
                 <span className="text-sm font-semibold text-[#0B1220]">Movement minutes</span>
                 <input name="movementMinutes" type="number" min="0" defaultValue="0" className="mt-2 h-12 w-full rounded-2xl border border-[#E2E8F0] bg-[#F8FAFC] px-4 text-sm outline-none transition focus:border-[#17C2B2] focus:bg-white focus:ring-4 focus:ring-teal-100" />
               </label>
-              <label className="flex items-center gap-3 rounded-2xl border border-[#E2E8F0] bg-[#F8FAFC] px-4 py-3 text-sm font-semibold text-[#0B1220]">
+              <label className="flex min-h-16 items-center gap-3 rounded-2xl border border-[#E2E8F0] bg-[#F8FAFC] px-4 py-3 text-sm font-semibold text-[#0B1220] transition hover:bg-white hover:shadow-[0_10px_24px_rgba(15,23,42,0.055)]">
                 <input name="strengthTraining" type="checkbox" className="size-4 accent-[#17C2B2]" />
                 Strength training today
               </label>
-              <label className="flex items-center gap-3 rounded-2xl border border-[#E2E8F0] bg-[#F8FAFC] px-4 py-3 text-sm font-semibold text-[#0B1220]">
+              <label className="flex min-h-16 items-center gap-3 rounded-2xl border border-[#E2E8F0] bg-[#F8FAFC] px-4 py-3 text-sm font-semibold text-[#0B1220] transition hover:bg-white hover:shadow-[0_10px_24px_rgba(15,23,42,0.055)]">
                 <input name="bowelMovement" type="checkbox" className="size-4 accent-[#17C2B2]" />
                 Bowel movement today
               </label>
             </div>
 
-            <div className="mt-6 rounded-[24px] border border-[#E2E8F0]/80 bg-[#F8FAFC]/75 p-5">
-              <div className="flex items-center gap-2">
-                <HeartPulse className="h-4 w-4 text-[#0F766E]" />
-                <h2 className="font-semibold text-[#0B1220]">Symptoms</h2>
+            <div className="mt-5 rounded-[24px] border border-[#E2E8F0]/80 bg-[#F8FAFC]/75 p-4 sm:p-5">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <HeartPulse className="h-4 w-4 text-[#0F766E]" />
+                    <h2 className="font-semibold text-[#0B1220]">Symptoms</h2>
+                  </div>
+                  <p className="mt-1 text-sm leading-6 text-[#64748B]">Select only what showed up today.</p>
+                </div>
+                <StatusBadge tone="mint">Optional</StatusBadge>
               </div>
               <div className="mt-4 grid gap-3 sm:grid-cols-2">
                 {symptoms.map(([value, label]) => (
-                  <div key={value} className="rounded-2xl border border-slate-200 bg-white p-4">
+                  <div key={value} className="rounded-2xl border border-slate-200 bg-white p-3 shadow-[0_8px_22px_rgba(15,23,42,0.035)]">
                     <label className="flex items-center gap-3 text-sm font-semibold text-slate-800">
                       <input type="checkbox" name="symptoms" value={value} className="size-4 accent-[#17C2B2]" />
                       {label}
@@ -113,12 +130,12 @@ export default async function DailyCheckInPage() {
               <span className="text-sm font-semibold text-[#0B1220]">Notes for your next visit</span>
               <textarea name="notes" className="mt-2 min-h-32 w-full rounded-2xl border border-[#E2E8F0] bg-[#F8FAFC] p-4 text-sm outline-none transition focus:border-[#17C2B2] focus:bg-white focus:ring-4 focus:ring-teal-100" placeholder="What changed today?" />
             </label>
-            <button className="mt-6 h-12 rounded-full bg-[#0B1220] px-6 text-sm font-semibold text-white shadow-[0_18px_35px_rgba(11,18,32,0.18)] transition hover:-translate-y-0.5">
+            <button className="mt-6 h-12 w-full rounded-full bg-[#0B1220] px-6 text-sm font-semibold text-white shadow-[0_18px_35px_rgba(11,18,32,0.18)] transition hover:-translate-y-0.5 sm:w-auto">
               Save check-in
             </button>
           </form>
 
-          <section className="rounded-[28px] border border-[#E2E8F0]/80 bg-white p-8 shadow-[0_12px_35px_rgba(15,23,42,0.055)]">
+          <section className="rounded-[28px] border border-[#E2E8F0]/80 bg-white p-5 shadow-[0_12px_35px_rgba(15,23,42,0.055)] xl:sticky xl:top-24">
             <div className="flex items-center gap-3">
               <div className="grid h-11 w-11 place-items-center rounded-2xl bg-amber-50 text-amber-700 ring-1 ring-amber-100">
                 <AlertTriangle className="h-5 w-5" />
@@ -128,7 +145,7 @@ export default async function DailyCheckInPage() {
                 <h2 className="mt-1 text-2xl font-semibold tracking-[-0.03em] text-[#050816]">Pattern review</h2>
               </div>
             </div>
-            <div className="mt-6 space-y-3">
+            <div className="mt-5 space-y-3">
               {(patientProfile?.riskFlags ?? []).slice(0, 4).map((flag) => (
                 <div key={flag.id} className="rounded-[18px] border border-[#E2E8F0]/80 bg-[#F8FAFC]/75 p-4">
                   <div className="flex items-center justify-between gap-3">
@@ -139,7 +156,19 @@ export default async function DailyCheckInPage() {
                   <p className="mt-3 text-sm font-semibold text-[#0F766E]">{flag.recommendation ?? "Review this with your clinician."}</p>
                 </div>
               ))}
-              {!patientProfile?.riskFlags.length ? <p className="text-sm leading-6 text-slate-500">No active flags yet. LeanDoze will surface patterns here after check-ins.</p> : null}
+              {!patientProfile?.riskFlags.length ? (
+                <div className="rounded-[20px] border border-[#E2E8F0]/80 bg-[#F8FAFC]/75 p-4">
+                  <div className="flex items-center gap-3">
+                    <div className="grid h-9 w-9 place-items-center rounded-xl bg-[#ECFEFF] text-[#0F766E]">
+                      <CheckCircle2 className="h-4 w-4" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-[#0B1220]">No active flags</p>
+                      <p className="mt-1 text-sm leading-6 text-slate-500">Patterns will appear here after check-ins are saved.</p>
+                    </div>
+                  </div>
+                </div>
+              ) : null}
             </div>
           </section>
         </div>
