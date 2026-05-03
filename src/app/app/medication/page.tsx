@@ -3,12 +3,14 @@ import { PatientLayout } from "@/components/layout";
 import { StatusBadge } from "@/components/status-badge";
 import { markDoseStatusAction, saveMedicationPlanAction } from "@/lib/app-actions";
 import { getPatientAppState } from "@/lib/app-data";
+import { glp1DoseScheduleOptions, glp1MedicationOptions, scheduleForValue } from "@/lib/glp1-options";
 
 export const dynamic = "force-dynamic";
 
 export default async function MedicationPlanPage() {
   const { patientProfile } = await getPatientAppState();
   const plan = patientProfile?.medicationPlans[0];
+  const selectedSchedule = scheduleForValue(plan?.doseSchedule) ?? glp1DoseScheduleOptions.find((option) => option.doseMg === plan?.doseMg && option.frequency === plan?.frequency);
 
   return (
     <div className="bg-[#F8FAFC] text-[#0B1220]">
@@ -25,21 +27,33 @@ export default async function MedicationPlanPage() {
               <label>
                 <span className="text-sm font-semibold text-[#0B1220]">Current GLP-1 medication</span>
                 <select name="medication" defaultValue={plan?.medication ?? "OZEMPIC"} className="mt-2 h-12 w-full rounded-2xl border border-[#E2E8F0] bg-[#F8FAFC] px-4 text-sm outline-none transition focus:border-[#17C2B2] focus:bg-white focus:ring-4 focus:ring-teal-100">
-                  {["OZEMPIC", "WEGOVY", "MOUNJARO", "ZEPBOUND", "RYBELSUS", "SAXENDA", "OTHER"].map((item) => (
-                    <option key={item}>{item}</option>
+                  {glp1MedicationOptions.map((item) => (
+                    <option key={item.value} value={item.value}>{item.label}</option>
                   ))}
                 </select>
               </label>
               <label>
-                <span className="text-sm font-semibold text-[#0B1220]">Dose amount, mg</span>
-                <input name="doseMg" type="number" step="0.01" defaultValue={plan?.doseMg ?? 0.25} className="mt-2 h-12 w-full rounded-2xl border border-[#E2E8F0] bg-[#F8FAFC] px-4 text-sm outline-none transition focus:border-[#17C2B2] focus:bg-white focus:ring-4 focus:ring-teal-100" />
+                <span className="text-sm font-semibold text-[#0B1220]">Custom medication name if OTHER</span>
+                <input name="customMedicationName" defaultValue={plan?.customName ?? ""} placeholder="Medication name" className="mt-2 h-12 w-full rounded-2xl border border-[#E2E8F0] bg-[#F8FAFC] px-4 text-sm outline-none transition focus:border-[#17C2B2] focus:bg-white focus:ring-4 focus:ring-teal-100" />
+              </label>
+              <label>
+                <span className="text-sm font-semibold text-[#0B1220]">Dose schedule</span>
+                <select name="doseSchedule" defaultValue={selectedSchedule?.value ?? plan?.doseSchedule ?? "OZEMPIC_025_WEEKLY_4"} className="mt-2 h-12 w-full rounded-2xl border border-[#E2E8F0] bg-[#F8FAFC] px-4 text-sm outline-none transition focus:border-[#17C2B2] focus:bg-white focus:ring-4 focus:ring-teal-100">
+                  {glp1DoseScheduleOptions.map((item) => (
+                    <option key={item.value} value={item.value}>{item.label}</option>
+                  ))}
+                </select>
               </label>
               <label>
                 <span className="text-sm font-semibold text-[#0B1220]">Injection frequency</span>
-                <select name="frequency" defaultValue={plan?.frequency ?? "WEEKLY"} className="mt-2 h-12 w-full rounded-2xl border border-[#E2E8F0] bg-[#F8FAFC] px-4 text-sm outline-none transition focus:border-[#17C2B2] focus:bg-white focus:ring-4 focus:ring-teal-100">
+                <select name="frequency" defaultValue={plan?.frequency ?? selectedSchedule?.frequency ?? "WEEKLY"} className="mt-2 h-12 w-full rounded-2xl border border-[#E2E8F0] bg-[#F8FAFC] px-4 text-sm outline-none transition focus:border-[#17C2B2] focus:bg-white focus:ring-4 focus:ring-teal-100">
                   <option value="WEEKLY">Weekly</option>
                   <option value="DAILY">Daily</option>
                 </select>
+              </label>
+              <label>
+                <span className="text-sm font-semibold text-[#0B1220]">Dose amount, mg</span>
+                <input name="doseMg" type="number" step="0.01" defaultValue={plan?.doseMg ?? selectedSchedule?.doseMg ?? 0.25} className="mt-2 h-12 w-full rounded-2xl border border-[#E2E8F0] bg-[#F8FAFC] px-4 text-sm outline-none transition focus:border-[#17C2B2] focus:bg-white focus:ring-4 focus:ring-teal-100" />
               </label>
               <label>
                 <span className="text-sm font-semibold text-[#0B1220]">Next dose date</span>

@@ -17,6 +17,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getDb } from "@/lib/db";
 import { generateGuidance } from "@/lib/guidance-engine";
+import { scheduleForValue } from "@/lib/glp1-options";
 import { acceptInvite as acceptInviteByToken } from "@/lib/invite-service";
 import { formatNarrativeForUI, generatePatientNarrative } from "@/lib/report-narrative";
 import { evaluatePatientRisk } from "@/lib/risk-engine";
@@ -34,11 +35,6 @@ function normalizedEmailValue(formData: FormData, key = "email") {
 
 function isValidEmail(email: string) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-}
-
-function numberValue(formData: FormData, key: string, fallback = 0) {
-  const value = Number.parseFloat(textValue(formData, key));
-  return Number.isFinite(value) ? value : fallback;
 }
 
 function intValue(formData: FormData, key: string, fallback = 0) {
@@ -212,11 +208,15 @@ export async function saveMedicationPlanAction(formData: FormData) {
   const { db, user } = await requireUser();
   const medicationRaw = textValue(formData, "medication");
   const customMedicationName = textValue(formData, "customMedicationName");
-  const startWeightLb = numberValue(formData, "startWeightLb");
-  const goalWeightLb = numberValue(formData, "goalWeightLb");
+  const startWeightLb = optionalNumberValue(formData, "startWeightLb");
+  const goalWeightLb = optionalNumberValue(formData, "goalWeightLb");
   const proteinGoalGrams = intValue(formData, "proteinGoalGrams", 120);
   const hydrationGoalOz = intValue(formData, "hydrationGoalOz", 90);
   const mainConcerns = formData.getAll("mainConcerns").map(String);
+  const doseSchedule = textValue(formData, "doseSchedule") || "OTHER";
+  const schedule = scheduleForValue(doseSchedule);
+  const doseMg = optionalNumberValue(formData, "doseMg") ?? schedule?.doseMg ?? 0;
+  const frequency = textValue(formData, "frequency") || schedule?.frequency || "WEEKLY";
 
   const patientProfile = await db.patientProfile.upsert({
     where: { userId: user.id },
@@ -236,27 +236,56 @@ export async function saveMedicationPlanAction(formData: FormData) {
       mainConcerns,
     },
   });
-
-  await db.medicationPlan.updateMany({
+  const activePlan = await db.medicationPlan.findFirst({
     where: { patientId: patientProfile.id, active: true },
-    data: { active: false },
+    orderBy: { createdAt: "desc" },
   });
 
-  await db.medicationPlan.create({
-    data: {
-      patientId: patientProfile.id,
+  const planData = {
       medication: medicationValue(medicationRaw),
       customName: medicationValue(medicationRaw) === MedicationName.OTHER ? customMedicationName || medicationRaw : null,
-      doseMg: numberValue(formData, "doseMg"),
-      frequency: frequencyValue(textValue(formData, "frequency")),
+      doseMg,
+      frequency: frequencyValue(frequency),
+      doseSchedule,
       startDate: dateValue(formData, "startDate", new Date()),
       nextDoseDate: dateValue(formData, "nextDoseDate"),
       notes: textValue(formData, "notes") || null,
-    },
-  });
+  };
+
+  if (activePlan) {
+    await db.medicationPlan.update({
+      where: { id: activePlan.id },
+      data: planData,
+    });
+  } else {
+    await db.medicationPlan.create({
+      data: {
+        patientId: patientProfile.id,
+        ...planData,
+      },
+    });
+  }
+
+  if (startWeightLb) {
+    const existingStartingWeight = await db.weightLog.findFirst({
+      where: { patientId: patientProfile.id },
+      orderBy: { loggedAt: "asc" },
+    });
+
+    if (!existingStartingWeight) {
+      await db.weightLog.create({
+        data: {
+          patientId: patientProfile.id,
+          loggedAt: dateValue(formData, "startDate", new Date()),
+          weightLb: startWeightLb,
+        },
+      });
+    }
+  }
 
   revalidatePath("/app/dashboard");
   revalidatePath("/app/medication");
+  revalidatePath("/app/onboarding");
   redirect("/app/dashboard");
 }
 

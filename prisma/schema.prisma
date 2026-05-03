@@ -163,10 +163,11 @@ model MedicationPlan {
   patientId String
   patient   PatientProfile @relation(fields: [patientId], references: [id], onDelete: Cascade)
 
-  medication MedicationName
-  customName String?
-  doseMg     Float
-  frequency  DoseFrequency  @default(WEEKLY)
+  medication   MedicationName
+  customName   String?
+  doseMg       Float
+  frequency    DoseFrequency  @default(WEEKLY)
+  doseSchedule String?
 
   startDate    DateTime
   nextDoseDate DateTime?
