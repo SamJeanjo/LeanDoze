@@ -24,7 +24,7 @@ const navItems = [
 ];
 
 const dashboardItems = [
-  { href: "/app/dashboard", label: "Patient", icon: LayoutDashboard },
+  { href: "/app", label: "Patient", icon: LayoutDashboard },
   { href: "/app/invite-doctor", label: "Invite doctor", icon: UserPlus },
   { href: "/clinic/dashboard", label: "Clinic", icon: UsersRound },
   { href: "/clinic/invite-patient", label: "Invite patient", icon: FilePlus2 },
@@ -63,10 +63,10 @@ export function Navbar() {
 }
 
 const patientItems = [
-  { href: "/app/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/app", label: "Today", icon: LayoutDashboard },
   { href: "/app/check-in", label: "Check-in", icon: ClipboardList },
   { href: "/app/progress", label: "Progress", icon: LineChart },
-  { href: "/app/reports", label: "Reports", icon: FileText },
+  { href: "/app/report", label: "Report", icon: FileText },
   { href: "/app/invite-doctor", label: "Invite doctor", icon: UserPlus },
   { href: "/app/settings", label: "Settings", icon: Settings },
 ];
