@@ -1,9 +1,30 @@
 import { auth, currentUser } from "@clerk/nextjs/server";
+import type { Prisma } from "@prisma/client";
 import { redirect } from "next/navigation";
 import { getDb } from "@/lib/db";
 
 export const reportDisclaimer =
   "LeanDoze does not provide medical advice. Review this report with your clinician.";
+
+const userAppInclude = {
+  patientProfile: {
+    include: {
+      medicationPlans: { where: { active: true }, orderBy: { createdAt: "desc" }, take: 1 },
+      weightLogs: { orderBy: { loggedAt: "desc" }, take: 8 },
+      nutritionLogs: { orderBy: { loggedAt: "desc" }, take: 7 },
+      hydrationLogs: { orderBy: { loggedAt: "desc" }, take: 7 },
+      symptomLogs: { orderBy: { loggedAt: "desc" }, take: 5 },
+      dailyCheckIns: { orderBy: { checkInDate: "desc" }, take: 7 },
+      riskFlags: { where: { status: "OPEN" }, orderBy: { createdAt: "desc" } },
+      guidanceMessages: { orderBy: [{ priority: "desc" }, { createdAt: "desc" }], take: 6 },
+      doctorReports: { orderBy: { createdAt: "desc" }, take: 5 },
+      accessGrants: { where: { revokedAt: null }, include: { clinic: true }, orderBy: { createdAt: "desc" } },
+    },
+  },
+  memberships: { include: { clinic: true } },
+} as const satisfies Prisma.UserInclude;
+
+type AppUser = Prisma.UserGetPayload<{ include: typeof userAppInclude }>;
 
 export async function getOrCreateCurrentUser() {
   const { userId } = await auth();
@@ -18,28 +39,21 @@ export async function getOrCreateCurrentUser() {
   const lastName = clerkUser?.lastName ?? null;
   const db = getDb();
 
-  const user = await db.user.upsert({
+  const seededUser = await db.user.findUnique({ where: { email }, select: { id: true } });
+
+  if (seededUser && seededUser.id !== userId) {
+    await db.user.update({
+      where: { id: seededUser.id },
+      data: { id: userId },
+    });
+  }
+
+  const user = (await db.user.upsert({
     where: { id: userId },
     update: { email, firstName, lastName },
     create: { id: userId, email, firstName, lastName },
-    include: {
-      patientProfile: {
-        include: {
-          medicationPlans: { where: { active: true }, orderBy: { createdAt: "desc" }, take: 1 },
-          weightLogs: { orderBy: { loggedAt: "desc" }, take: 8 },
-          nutritionLogs: { orderBy: { loggedAt: "desc" }, take: 7 },
-          hydrationLogs: { orderBy: { loggedAt: "desc" }, take: 7 },
-          symptomLogs: { orderBy: { loggedAt: "desc" }, take: 5 },
-          dailyCheckIns: { orderBy: { checkInDate: "desc" }, take: 7 },
-          riskFlags: { where: { status: "OPEN" }, orderBy: { createdAt: "desc" } },
-          guidanceMessages: { orderBy: [{ priority: "desc" }, { createdAt: "desc" }], take: 6 },
-          doctorReports: { orderBy: { createdAt: "desc" }, take: 5 },
-          accessGrants: { where: { revokedAt: null }, include: { clinic: true }, orderBy: { createdAt: "desc" } },
-        },
-      },
-      memberships: { include: { clinic: true } },
-    },
-  });
+    include: userAppInclude,
+  })) as AppUser;
 
   return { db, user };
 }

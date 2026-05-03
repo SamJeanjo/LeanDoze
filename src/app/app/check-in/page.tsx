@@ -1,4 +1,5 @@
 import { Activity, AlertTriangle, CheckCircle2, Droplet, HeartPulse, Scale, Utensils } from "lucide-react";
+import type { RiskFlag } from "@prisma/client";
 import { PatientLayout } from "@/components/layout";
 import { StatusBadge } from "@/components/status-badge";
 import { saveDailyCheckInAction } from "@/lib/app-actions";
@@ -18,6 +19,7 @@ const symptoms = [
 
 export default async function DailyCheckInPage() {
   const { patientProfile } = await getPatientAppState();
+  const riskFlags = (patientProfile?.riskFlags ?? []) as RiskFlag[];
 
   return (
     <div className="bg-[#F8FAFC] text-[#0B1220]">
@@ -146,7 +148,7 @@ export default async function DailyCheckInPage() {
               </div>
             </div>
             <div className="mt-5 space-y-3">
-              {(patientProfile?.riskFlags ?? []).slice(0, 4).map((flag) => (
+              {riskFlags.slice(0, 4).map((flag) => (
                 <div key={flag.id} className="rounded-[18px] border border-[#E2E8F0]/80 bg-[#F8FAFC]/75 p-4">
                   <div className="flex items-center justify-between gap-3">
                     <p className="font-semibold tracking-[-0.015em] text-[#0B1220]">{flag.title}</p>
@@ -156,7 +158,7 @@ export default async function DailyCheckInPage() {
                   <p className="mt-3 text-sm font-semibold text-[#0F766E]">{flag.recommendation ?? "Review this with your clinician."}</p>
                 </div>
               ))}
-              {!patientProfile?.riskFlags.length ? (
+              {!riskFlags.length ? (
                 <div className="rounded-[20px] border border-[#E2E8F0]/80 bg-[#F8FAFC]/75 p-4">
                   <div className="flex items-center gap-3">
                     <div className="grid h-9 w-9 place-items-center rounded-xl bg-[#ECFEFF] text-[#0F766E]">
