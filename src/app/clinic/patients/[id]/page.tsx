@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import Link from "next/link";
 import { RiskFlagStatus } from "@prisma/client";
 import { Download, MessageSquareText } from "lucide-react";
 import { MetricCard } from "@/components/cards";
@@ -51,10 +52,15 @@ export default async function PatientDetail({ params, searchParams }: { params: 
         title={patientName(patient)}
         description={`${plan ? `${plan.medication} ${plan.doseMg}mg` : "No active medication plan"}. Clinics see this only because active PatientAccess exists.`}
         action={
-          <button className="inline-flex h-11 items-center gap-2 rounded-full bg-slate-950 px-5 text-sm font-semibold text-white transition hover:bg-slate-800">
-            <Download className="size-4" />
-            Export PDF report
-          </button>
+          <div className="flex flex-wrap gap-2">
+            <Link href="/clinic/reports" className="inline-flex h-11 items-center gap-2 rounded-full border border-slate-200 bg-white px-5 text-sm font-semibold text-slate-700 transition hover:-translate-y-0.5 hover:bg-slate-50">
+              Open analytics
+            </Link>
+            <button className="inline-flex h-11 items-center gap-2 rounded-full bg-slate-950 px-5 text-sm font-semibold text-white transition hover:bg-slate-800">
+              <Download className="size-4" />
+              Export PDF report
+            </button>
+          </div>
         }
         activePath="/clinic/patients"
       >
