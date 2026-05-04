@@ -6,6 +6,7 @@ import { AppShell } from "@/components/ui/AppShell";
 import { DesktopSidebar } from "@/components/patient/DesktopSidebar";
 import { MobileBottomNav, type PatientNavKey } from "@/components/patient/MobileBottomNav";
 import { InstallCard } from "@/components/pwa/InstallCard";
+import { NotificationPermissionPrompt } from "@/components/notifications/NotificationSettings";
 
 export function PatientShell({ active, children }: { active: PatientNavKey; children: ReactNode }) {
   return (
@@ -23,6 +24,7 @@ export function PatientShell({ active, children }: { active: PatientNavKey; chil
         </div>
       </header>
       {children}
+      <NotificationPermissionPrompt />
       <InstallCard />
     </AppShell>
   );
