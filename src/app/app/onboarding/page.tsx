@@ -83,6 +83,13 @@ export default async function PatientOnboardingPage() {
               <span className="text-sm font-semibold text-[#0B1220]">Hydration goal oz</span>
               <input name="hydrationGoalOz" type="number" defaultValue={patientProfile?.hydrationGoalOz ?? 90} className="mt-2 h-12 w-full rounded-2xl border border-[#E2E8F0] bg-[#F8FAFC] px-4 text-sm outline-none transition focus:border-[#17C2B2] focus:bg-white focus:ring-4 focus:ring-teal-100" />
             </label>
+            <label className="sm:col-span-2">
+              <span className="text-sm font-semibold text-[#0B1220]">Clinic code optional</span>
+              <input name="clinicCode" placeholder="LDZ-CLINIC" className="mt-2 h-12 w-full rounded-2xl border border-[#E2E8F0] bg-[#F8FAFC] px-4 text-sm uppercase tracking-[0.08em] outline-none transition focus:border-[#17C2B2] focus:bg-white focus:ring-4 focus:ring-teal-100" />
+              <span className="mt-2 block text-xs leading-5 text-[#64748B]">
+                Adding a code does not connect your clinic automatically. You choose when to share your reports.
+              </span>
+            </label>
           </div>
 
           <div className="mt-6 rounded-[24px] border border-[#E2E8F0]/80 bg-[#F8FAFC]/75 p-5">

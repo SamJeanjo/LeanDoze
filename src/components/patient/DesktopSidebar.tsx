@@ -2,6 +2,7 @@ import Link from "next/link";
 import { UserButton } from "@clerk/nextjs";
 import { Apple, BookOpen, CalendarDays, FileText, HeartPulse, Home, LineChart, Settings } from "lucide-react";
 import { Logo } from "@/components/brand/Logo";
+import { ClinicConnectionCard } from "@/components/patient/ClinicConnectionCard";
 import type { PatientNavKey } from "@/components/patient/MobileBottomNav";
 
 const nav = [
@@ -49,10 +50,7 @@ export function DesktopSidebar({ active }: { active: PatientNavKey }) {
         </nav>
 
         <div className="mt-auto space-y-3">
-          <div className="rounded-[26px] bg-[#07111F] p-4 text-white">
-            <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#7DD3C7]">Clinic connected</p>
-            <p className="mt-2 text-sm leading-6 text-slate-300">Your next visit is already getting organized.</p>
-          </div>
+          <ClinicConnectionCard />
           <div className="flex items-center justify-between rounded-[22px] bg-[#F8FAFC] p-3 ring-1 ring-[#E2E8F0]">
             <p className="text-sm font-semibold text-[#07111F]">Account</p>
             <UserButton afterSignOutUrl="/" />
