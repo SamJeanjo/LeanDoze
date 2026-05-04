@@ -1,6 +1,6 @@
-import { auth, currentUser } from "@clerk/nextjs/server";
 import type { Prisma } from "@prisma/client";
 import { redirect } from "next/navigation";
+import { getAuthIdentity } from "@/lib/auth-identity";
 import { getDb } from "@/lib/db";
 
 export const reportDisclaimer =
@@ -27,16 +27,13 @@ const userAppInclude = {
 type AppUser = Prisma.UserGetPayload<{ include: typeof userAppInclude }>;
 
 export async function getOrCreateCurrentUser() {
-  const { userId } = await auth();
+  const identity = await getAuthIdentity();
 
-  if (!userId) {
+  if (!identity) {
     redirect("/sign-in");
   }
 
-  const clerkUser = await currentUser();
-  const email = clerkUser?.emailAddresses[0]?.emailAddress ?? `${userId}@leandoze.local`;
-  const firstName = clerkUser?.firstName ?? null;
-  const lastName = clerkUser?.lastName ?? null;
+  const { userId, email, firstName, lastName } = identity;
   const db = getDb();
 
   const seededUser = await db.user.findUnique({ where: { email }, select: { id: true } });

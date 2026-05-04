@@ -1,6 +1,6 @@
 import { randomBytes } from "node:crypto";
-import { currentUser } from "@clerk/nextjs/server";
 import { InviteStatus, InviteType, PatientAccessRole, UserRole } from "@prisma/client";
+import { getAuthIdentity } from "@/lib/auth-identity";
 import { getDb } from "@/lib/db";
 
 export type InviteApiErrorCode =
@@ -81,17 +81,13 @@ export function toInviteDto(invite: {
 }
 
 export async function getCurrentAppUser() {
-  const { auth } = await import("@clerk/nextjs/server");
-  const { userId } = await auth();
+  const identity = await getAuthIdentity();
 
-  if (!userId) {
+  if (!identity) {
     return null;
   }
 
-  const clerkUser = await currentUser();
-  const email = clerkUser?.emailAddresses[0]?.emailAddress ?? `${userId}@leandoze.local`;
-  const firstName = clerkUser?.firstName ?? null;
-  const lastName = clerkUser?.lastName ?? null;
+  const { userId, email, firstName, lastName } = identity;
   const db = getDb();
 
   return db.user.upsert({
@@ -381,4 +377,3 @@ export async function acceptInvite(token: string) {
     redirectTo: invite.type === InviteType.CLINIC_TO_PATIENT ? "/app/dashboard" : "/clinic/dashboard",
   } as const;
 }
-

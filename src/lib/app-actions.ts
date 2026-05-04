@@ -1,7 +1,6 @@
 "use server";
 
 import { randomBytes } from "node:crypto";
-import { currentUser, auth } from "@clerk/nextjs/server";
 import {
   DoseFrequency,
   InviteStatus,
@@ -15,6 +14,7 @@ import {
 } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { getAuthIdentity } from "@/lib/auth-identity";
 import { getDb } from "@/lib/db";
 import { generateGuidance } from "@/lib/guidance-engine";
 import { scheduleForValue } from "@/lib/glp1-options";
@@ -127,16 +127,13 @@ async function sendInviteEmail(email: string, inviteLink: string) {
 }
 
 async function requireUser() {
-  const { userId } = await auth();
+  const identity = await getAuthIdentity();
 
-  if (!userId) {
+  if (!identity) {
     redirect("/sign-in");
   }
 
-  const clerkUser = await currentUser();
-  const email = clerkUser?.emailAddresses[0]?.emailAddress ?? `${userId}@leandoze.local`;
-  const firstName = clerkUser?.firstName ?? null;
-  const lastName = clerkUser?.lastName ?? null;
+  const { userId, email, firstName, lastName } = identity;
   const db = getDb();
 
   const user = await db.user.upsert({
