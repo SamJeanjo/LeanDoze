@@ -72,7 +72,7 @@ export function QuickCheckIn() {
 
   return (
     <>
-      <section id="quick-check-in" className="rounded-[34px] bg-white p-5 shadow-[0_22px_70px_rgba(15,23,42,0.075)] sm:p-6">
+      <section id="quick-check-in" className="relative z-10 rounded-3xl border border-slate-200/70 bg-white p-5 shadow-[0_20px_60px_rgba(15,23,42,0.06)] sm:p-6">
         <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
           <div>
             <p className="text-xs font-bold uppercase tracking-[0.24em] text-[#0F766E]">Quick check-in</p>

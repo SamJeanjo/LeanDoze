@@ -13,7 +13,7 @@ const nav = [
 
 export function MobileBottomNav({ active }: { active: PatientNavKey }) {
   return (
-    <nav className="fixed inset-x-0 bottom-0 z-50 border-t border-[#E2E8F0]/80 bg-white/95 px-2 pb-[max(env(safe-area-inset-bottom),0.5rem)] pt-2 shadow-[0_-18px_40px_rgba(15,23,42,0.08)] backdrop-blur-xl lg:hidden">
+    <nav className="fixed inset-x-0 bottom-0 z-50 border-t border-[#E2E8F0]/80 bg-white px-2 pb-[max(env(safe-area-inset-bottom),0.5rem)] pt-2 shadow-[0_-18px_40px_rgba(15,23,42,0.08)] lg:hidden">
       <div className="mx-auto grid max-w-[520px] grid-cols-5 gap-1">
         {nav.map((item) => {
           const Icon = item.icon;

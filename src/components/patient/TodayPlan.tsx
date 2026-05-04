@@ -23,7 +23,7 @@ export function TodayPlan({ plan }: { plan: TodayPlanMock }) {
   const hiddenCount = Math.max(0, plan.actions.length - 3);
 
   return (
-    <section className="rounded-[34px] bg-white p-5 shadow-[0_24px_70px_rgba(15,23,42,0.075)] sm:p-6 lg:p-8">
+    <section className="relative z-10 rounded-3xl border border-slate-200/70 bg-white p-5 shadow-[0_20px_60px_rgba(15,23,42,0.06)] sm:p-6 lg:p-8">
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
         <div>
           <p className="text-xs font-bold uppercase tracking-[0.28em] text-[#0F766E]">Today&apos;s LeanDoze Plan</p>
@@ -31,9 +31,11 @@ export function TodayPlan({ plan }: { plan: TodayPlanMock }) {
         </div>
         <p className="max-w-sm text-sm leading-6 text-[#64748B]">Small check-ins make your report easier.</p>
       </div>
-      <div className="mt-6 grid gap-3 xl:grid-cols-3">
+      <div className="mt-6 grid grid-cols-12 gap-3">
         {visibleActions.map((action) => (
-          <ActionCard key={action.id} title={action.title} reason={action.reason} cta={action.cta} progress={action.progress} icon={actionIcon(action)} complete={action.state === "complete"} />
+          <div key={action.id} className="col-span-12 xl:col-span-4">
+            <ActionCard title={action.title} reason={action.reason} cta={action.cta} progress={action.progress} icon={actionIcon(action)} complete={action.state === "complete"} />
+          </div>
         ))}
       </div>
       {hiddenCount ? (

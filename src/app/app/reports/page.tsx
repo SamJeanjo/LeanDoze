@@ -33,9 +33,9 @@ export default function PatientReportsPage() {
         <ClinicianReportPreview profile={patientProfileMock} logs={dailyLogsMock} full />
         <ClinicConnectionCard variant="report" />
 
-        <PremiumCard className="bg-[#FFF7ED]">
-          <p className="text-xs font-bold uppercase tracking-[0.24em] text-amber-800">Review note</p>
-          <p className="mt-3 text-sm leading-6 text-amber-900">
+        <PremiumCard>
+          <p className="text-xs font-bold uppercase tracking-[0.24em] text-[#0F766E]">Review note</p>
+          <p className="mt-3 text-sm leading-6 text-[#64748B]">
             LeanDoze is a tracking and support tool. It does not provide medical diagnosis, treatment, or prescribing advice. Review this report with your clinician.
           </p>
         </PremiumCard>

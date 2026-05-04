@@ -18,9 +18,9 @@ const nav = [
 
 export function DesktopSidebar({ active }: { active: PatientNavKey }) {
   return (
-    <aside className="sticky top-8 hidden h-[calc(100vh-4rem)] rounded-[34px] border border-[#E2E8F0]/80 bg-white/90 p-4 shadow-[0_24px_70px_rgba(15,23,42,0.08)] backdrop-blur-xl lg:block">
+    <aside className="sticky top-8 col-span-12 hidden h-[calc(100vh-4rem)] rounded-[34px] border border-slate-200/70 bg-white p-4 shadow-[0_20px_60px_rgba(15,23,42,0.06)] lg:col-span-3 lg:block xl:col-span-2">
       <div className="flex h-full flex-col">
-        <Link href="/app" className="flex items-center gap-3 rounded-[26px] bg-[#F8FAFC] p-3 ring-1 ring-[#E2E8F0]/80">
+        <Link href="/app" className="flex items-center gap-3 rounded-3xl border border-slate-200/70 bg-white p-3 shadow-[0_20px_60px_rgba(15,23,42,0.06)]">
           <Logo variant="mark" theme="light" size="md" priority />
           <div>
             <p className="font-semibold tracking-[-0.02em] text-[#07111F]">LeanDoze</p>
@@ -51,7 +51,7 @@ export function DesktopSidebar({ active }: { active: PatientNavKey }) {
 
         <div className="mt-auto space-y-3">
           <ClinicConnectionCard />
-          <div className="flex items-center justify-between rounded-[22px] bg-[#F8FAFC] p-3 ring-1 ring-[#E2E8F0]">
+          <div className="relative z-10 flex items-center justify-between rounded-3xl border border-slate-200/70 bg-white px-4 py-3 shadow-[0_20px_60px_rgba(15,23,42,0.06)]">
             <p className="text-sm font-semibold text-[#07111F]">Account</p>
             <UserButton afterSignOutUrl="/" />
           </div>

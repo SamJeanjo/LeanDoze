@@ -3,10 +3,8 @@ import type { TodayPlanMock } from "@/lib/mockPatientData";
 
 export function TodayHero({ firstName, plan }: { firstName: string; plan: TodayPlanMock }) {
   return (
-    <section className="relative overflow-hidden rounded-[36px] bg-white p-6 shadow-[0_28px_90px_rgba(15,23,42,0.08)] sm:p-8 lg:p-10">
-      <div className="absolute -right-20 -top-20 h-72 w-72 rounded-full bg-[#7DD3C7]/24 blur-3xl" />
-      <div className="absolute bottom-0 left-10 h-32 w-32 rounded-full bg-[#FFF7ED] blur-3xl" />
-      <div className="relative max-w-3xl">
+    <section className="relative z-10 overflow-hidden rounded-3xl border border-slate-200/70 bg-white p-6 shadow-[0_20px_60px_rgba(15,23,42,0.06)] sm:p-8 lg:p-10">
+      <div className="relative z-10 max-w-3xl">
         <div className="flex flex-wrap items-center gap-2">
           <StatusBadge tone="teal">Day {plan.doseCycleDay} of your dose cycle</StatusBadge>
           <StatusBadge tone="success">You&apos;re on track this week</StatusBadge>

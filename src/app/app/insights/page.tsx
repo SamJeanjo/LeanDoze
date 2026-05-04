@@ -15,9 +15,11 @@ export default function PatientInsightsPage() {
       <div className="ld-page-enter space-y-6">
         <PageHeader eyebrow="Insights" title="Understand your dose rhythm." description="See soft patterns around appetite, symptoms, medication timing, and what may be worth mentioning next visit." />
         <DoseCycle profile={patientProfileMock} plan={todayPlanMock} />
-        <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
-          <SymptomCheckIn />
-          <PremiumCard>
+        <div className="grid grid-cols-12 gap-6">
+          <div className="col-span-12 xl:col-span-8">
+            <SymptomCheckIn />
+          </div>
+          <PremiumCard className="col-span-12 xl:col-span-4">
             <p className="text-xs font-bold uppercase tracking-[0.24em] text-[#0F766E]">Pattern snapshot</p>
             <h2 className="mt-3 text-2xl font-semibold tracking-[-0.035em] text-[#07111F]">{symptomDays} symptom days logged</h2>
             <p className="mt-3 text-sm leading-6 text-[#64748B]">LeanDoze keeps this organized so you can review patterns with your clinician.</p>

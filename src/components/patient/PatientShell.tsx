@@ -9,7 +9,7 @@ import { MobileBottomNav, type PatientNavKey } from "@/components/patient/Mobile
 export function PatientShell({ active, children }: { active: PatientNavKey; children: ReactNode }) {
   return (
     <AppShell sidebar={<DesktopSidebar active={active} />} mobileNav={<MobileBottomNav active={active} />}>
-      <header className="sticky top-0 z-40 -mx-4 mb-5 border-b border-[#E2E8F0]/80 bg-white/92 px-4 backdrop-blur-xl sm:-mx-6 sm:px-6 lg:hidden">
+      <header className="sticky top-0 z-40 -mx-4 mb-5 border-b border-[#E2E8F0]/80 bg-white px-4 sm:-mx-6 sm:px-6 lg:hidden">
         <div className="flex h-16 items-center justify-between">
           <Link href="/app" className="flex items-center gap-3">
             <Logo variant="mark" theme="light" size="sm" priority />

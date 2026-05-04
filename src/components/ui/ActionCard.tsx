@@ -18,7 +18,7 @@ export function ActionCard({ title, reason, cta, progress, icon: Icon, complete 
   const [done, setDone] = useState(complete);
 
   return (
-    <article className="group rounded-[26px] bg-white p-4 shadow-[0_16px_45px_rgba(15,23,42,0.06)] ring-1 ring-[#E2E8F0]/75 transition duration-300 hover:-translate-y-1 hover:shadow-[0_24px_60px_rgba(15,23,42,0.09)]">
+    <article className="group relative z-10 rounded-3xl border border-slate-200/70 bg-white p-4 shadow-[0_20px_60px_rgba(15,23,42,0.06)] transition duration-300 hover:-translate-y-1 hover:shadow-[0_24px_60px_rgba(15,23,42,0.09)]">
       <div className="flex items-start gap-3">
         <div className={done ? "grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-[#DCFCE7] text-[#16A34A] ring-1 ring-[#BBF7D0]" : "grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-[#ECFEFF] text-[#0F766E] ring-1 ring-[#99F6E4]/80"}>
           {done ? <CheckCircle2 className="h-5 w-5" /> : <Icon className="h-5 w-5" />}

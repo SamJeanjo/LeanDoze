@@ -27,7 +27,7 @@ export function ClinicianReportPreview({ profile, logs, full = false }: { profil
           ["Protein / hydration", `${summary.protein}; ${summary.hydration}`],
           ["Dose adherence", summary.dose],
         ].map(([label, value]) => (
-          <div key={label} className="rounded-2xl bg-[#F8FAFC] p-4 ring-1 ring-[#E2E8F0]/80">
+          <div key={label} className="relative z-10 rounded-3xl border border-slate-200/70 bg-white p-4 shadow-[0_20px_60px_rgba(15,23,42,0.06)]">
             <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#64748B]">{label}</p>
             <p className="mt-2 text-sm font-semibold leading-6 text-[#07111F]">{value}</p>
           </div>
@@ -35,9 +35,9 @@ export function ClinicianReportPreview({ profile, logs, full = false }: { profil
       </div>
 
       {full ? (
-        <div className="mt-5 rounded-2xl bg-[#FFF7ED] p-4 ring-1 ring-orange-100">
-          <p className="text-sm font-semibold text-amber-900">Questions for clinician</p>
-          <ul className="mt-2 space-y-1 text-sm leading-6 text-amber-800">
+        <div className="relative z-10 mt-5 rounded-3xl border border-slate-200/70 bg-white p-4 shadow-[0_20px_60px_rgba(15,23,42,0.06)]">
+          <p className="text-sm font-semibold text-[#07111F]">Questions for clinician</p>
+          <ul className="mt-2 space-y-1 text-sm leading-6 text-[#64748B]">
             {summary.questions.map((question) => (
               <li key={question}>- {question}</li>
             ))}
