@@ -72,9 +72,8 @@ export function PatientAppShell({ active, children }: PatientAppShellProps) {
                 );
               })}
             </nav>
-            <div className="mt-auto rounded-[24px] bg-[#07111F] p-4 text-white">
-              <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#7DD3C7]">Clinic connected</p>
-              <p className="mt-2 text-sm leading-6 text-slate-300">Your reports are ready when you choose to share.</p>
+            <div className="mt-auto rounded-2xl border border-slate-200/70 bg-white px-4 py-3 text-sm text-slate-500">
+              Reports are shared only when you choose.
             </div>
           </div>
         </aside>
