@@ -18,6 +18,11 @@ body {
   font-family: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
 }
 
+html,
+body {
+  overscroll-behavior: none;
+}
+
 ::selection {
   background: #7dd3c7;
   color: #0f172a;

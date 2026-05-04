@@ -15,6 +15,7 @@ import {
   Utensils,
 } from "lucide-react";
 import { Footer, Navbar } from "@/components/layout";
+import { InstallPrompt } from "@/components/pwa/InstallPrompt";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { ProgressBar } from "@/components/progress";
 import { buildMetadata, faqItems, landingDescription, medicalDisclaimer, medicationTrademarkDisclaimer, primaryKeywords, siteUrl } from "@/lib/seo";
@@ -255,6 +256,17 @@ export default function Home() {
                 </div>
               ))}
             </div>
+          </div>
+        </section>
+
+        <section className="bg-white py-20">
+          <div className="mx-auto grid max-w-7xl gap-8 px-4 sm:px-6 lg:grid-cols-[1fr_0.75fr] lg:items-center lg:px-8">
+            <SectionIntro
+              eyebrow="Installable app"
+              title="Use LeanDoze like an app"
+              text="Add LeanDoze to your home screen for a faster, full-screen experience. It opens directly to your daily GLP-1 companion without browser chrome when installed."
+            />
+            <InstallPrompt buttonLabel="Install app" />
           </div>
         </section>
 

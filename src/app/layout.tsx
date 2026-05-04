@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { ClerkProvider } from "@clerk/nextjs";
 import { Inter, Roboto_Mono } from "next/font/google";
 import "./globals.css";
@@ -20,8 +20,8 @@ export const metadata: Metadata = {
     default: "LeanDoze — Your Daily GLP-1 Companion",
     template: "%s | LeanDoze",
   },
-  description:
-    "LeanDoze helps GLP-1 patients manage dose days, protein, hydration, side effects, progress, and clinic visibility.",
+  description: "Track GLP-1 routines, symptoms, protein, hydration, and progress.",
+  manifest: "/site.webmanifest",
   icons: {
     icon: [
       { url: "/favicon.ico" },
@@ -30,6 +30,10 @@ export const metadata: Metadata = {
     ],
     apple: [{ url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
   },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#14B8A6",
 };
 
 export default function RootLayout({
@@ -43,6 +47,11 @@ export default function RootLayout({
         lang="en"
         className={`${inter.variable} ${robotoMono.variable} h-full antialiased`}
       >
+        <head>
+          <meta name="apple-mobile-web-app-capable" content="yes" />
+          <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+          <meta name="apple-mobile-web-app-title" content="LeanDoze" />
+        </head>
         <body className="min-h-full bg-background text-foreground">
           {children}
         </body>
