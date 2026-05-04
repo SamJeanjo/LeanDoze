@@ -13,12 +13,12 @@ type MetricCardProps = {
 
 export function MetricCard({ label, value, helper, progress, icon: Icon, tone = "teal" }: MetricCardProps) {
   return (
-    <PremiumCard className="transition duration-300 hover:-translate-y-0.5 hover:shadow-[0_24px_70px_rgba(15,23,42,0.09)]">
+    <PremiumCard className="transition-all duration-300 ease-out hover:-translate-y-0.5 hover:shadow-[0_28px_80px_rgba(15,23,42,0.09)]">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <p className="text-sm font-medium text-[#64748B]">{label}</p>
+          <p className="text-sm font-medium text-slate-600">{label}</p>
           <p className="mt-2 text-3xl font-semibold tracking-[-0.045em] text-[#07111F]">{value}</p>
-          <p className="mt-1 text-sm leading-6 text-[#64748B]">{helper}</p>
+          <p className="mt-1 text-xs leading-5 text-slate-500">{helper}</p>
         </div>
         {Icon ? (
           <div className="grid h-11 w-11 place-items-center rounded-2xl bg-[#ECFEFF] text-[#0F766E] ring-1 ring-[#99F6E4]/70">

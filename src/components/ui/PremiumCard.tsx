@@ -16,7 +16,7 @@ const tones = {
 
 export function PremiumCard({ children, className = "", id, tone = "light" }: PremiumCardProps) {
   return (
-    <section id={id} className={`relative z-0 overflow-hidden rounded-3xl border border-slate-200/70 p-5 shadow-[0_20px_60px_rgba(15,23,42,0.06)] sm:p-6 ${tones[tone]} ${className}`}>
+    <section id={id} className={`relative z-0 overflow-hidden rounded-[28px] border border-slate-200/70 p-5 shadow-[0_24px_70px_rgba(15,23,42,0.06)] sm:p-6 ${tones[tone]} ${className}`}>
       {children}
     </section>
   );

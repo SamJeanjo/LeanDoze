@@ -5,8 +5,8 @@ type ProgressBarProps = {
 };
 
 const tones = {
-  teal: "bg-[#14B8A6]",
-  green: "bg-[#22C55E]",
+  teal: "bg-gradient-to-r from-[#14B8A6] to-[#22C55E]",
+  green: "bg-gradient-to-r from-[#14B8A6] to-[#22C55E]",
   dark: "bg-[#07111F]",
   coral: "bg-[#FB7185]",
   amber: "bg-[#F59E0B]",
@@ -16,8 +16,8 @@ export function ProgressBar({ value, tone = "teal", className = "" }: ProgressBa
   const width = Math.max(0, Math.min(100, value));
 
   return (
-    <div className={`h-2 overflow-hidden rounded-full bg-[#E2E8F0]/80 ${className}`}>
-      <div className={`ld-progress h-full origin-left rounded-full ${tones[tone]}`} style={{ width: `${width}%` }} />
+    <div className={`h-2 overflow-hidden rounded-full bg-slate-100 ${className}`}>
+      <div className={`ld-progress h-full origin-left rounded-full transition-all duration-700 ease-out ${tones[tone]}`} style={{ width: `${width}%` }} />
     </div>
   );
 }

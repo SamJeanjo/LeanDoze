@@ -72,28 +72,28 @@ export function QuickCheckIn() {
 
   return (
     <>
-      <section id="quick-check-in" className="relative z-0 rounded-3xl border border-slate-200/70 bg-white p-5 shadow-[0_20px_60px_rgba(15,23,42,0.06)] sm:p-6">
-        <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
+      <section id="quick-check-in" className="relative z-0 rounded-[28px] border border-slate-200/70 bg-white p-6 shadow-[0_24px_70px_rgba(15,23,42,0.06)]">
+        <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
           <div>
-            <p className="text-xs font-bold uppercase tracking-[0.24em] text-[#0F766E]">Quick check-in</p>
-            <h2 className="mt-3 text-2xl font-semibold tracking-[-0.035em] text-[#07111F]">Stay consistent, not perfect.</h2>
-            <p className="mt-2 text-sm leading-6 text-[#64748B]">Log the essentials in under 10 seconds.</p>
+            <p className="text-xs font-bold uppercase tracking-[0.32em] text-[#0F766E]">Quick check-in</p>
+            <h2 className="mt-4 text-2xl font-semibold leading-tight tracking-[-0.03em] text-[#07111F]">Stay consistent, not perfect.</h2>
+            <p className="mt-2 text-sm leading-6 text-slate-600">Log the essentials in under 10 seconds.</p>
           </div>
           <span className="w-fit rounded-full bg-[#ECFEFF] px-3 py-1.5 text-xs font-bold text-[#0F766E] ring-1 ring-[#99F6E4]/70">4 taps max</span>
         </div>
-        <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-4">
           {actions.map((action) => {
             const Icon = action.icon;
             return (
               <button
                 key={action.label}
                 onClick={() => setActive(action.label)}
-                className="flex min-h-28 flex-col items-start justify-between rounded-[24px] bg-[#F8FAFC] p-4 text-left ring-1 ring-[#E2E8F0]/80 transition duration-300 hover:-translate-y-1 hover:bg-[#ECFEFF] hover:shadow-[0_16px_35px_rgba(15,23,42,0.07)] active:scale-[0.99]"
+                className="flex min-h-28 flex-col items-start justify-between rounded-[24px] bg-[#F8FAFC] p-4 text-left ring-1 ring-[#E2E8F0]/80 transition-all duration-300 ease-out hover:-translate-y-0.5 hover:bg-white hover:shadow-[0_28px_80px_rgba(15,23,42,0.09)] active:scale-[0.99]"
               >
                 <Icon className="h-5 w-5 text-[#0F766E]" />
                 <span>
                   <span className="block text-sm font-semibold text-[#07111F]">{action.label}</span>
-                  <span className="mt-1 block text-xs font-medium text-[#64748B]">{action.value}</span>
+                  <span className="mt-1 block text-xs font-medium leading-5 text-slate-500">{action.value}</span>
                 </span>
               </button>
             );

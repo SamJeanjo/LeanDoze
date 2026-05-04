@@ -23,7 +23,7 @@ export function DoseCycle({ profile, plan }: { profile: PatientProfileMock; plan
         </div>
       </div>
 
-      <div className="mt-7 grid grid-cols-7 gap-2">
+      <div className="mt-6 grid grid-cols-7 gap-2">
         {Array.from({ length: 7 }, (_, index) => {
           const day = index + 1;
           const active = day === plan.doseCycleDay;

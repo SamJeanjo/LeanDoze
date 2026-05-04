@@ -17,7 +17,7 @@ function ActionCard({ action }: { action: TodayAction }) {
   const Icon = icons[action.id as keyof typeof icons] ?? CheckCircle2;
 
   return (
-    <article className="group rounded-[24px] border border-[#E2E8F0]/80 bg-white p-4 shadow-[0_12px_35px_rgba(15,23,42,0.055)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_18px_45px_rgba(15,23,42,0.075)]">
+    <article className="group rounded-[28px] border border-slate-200/70 bg-white p-4 shadow-[0_24px_70px_rgba(15,23,42,0.06)] transition-all duration-300 ease-out hover:-translate-y-0.5 hover:shadow-[0_28px_80px_rgba(15,23,42,0.09)]">
       <div className="flex items-start gap-3">
         <div className={done ? "grid h-11 w-11 place-items-center rounded-2xl bg-[#DCFCE7] text-[#16A34A] ring-1 ring-[#BBF7D0]" : "grid h-11 w-11 place-items-center rounded-2xl bg-[#ECFEFF] text-[#0F766E] ring-1 ring-[#99F6E4]"}>
           <Icon className="h-5 w-5" />
@@ -28,12 +28,12 @@ function ActionCard({ action }: { action: TodayAction }) {
             {done ? <CheckCircle2 className="h-4 w-4 shrink-0 text-[#16A34A]" /> : null}
           </div>
           <p className="mt-2 text-sm leading-6 text-[#64748B]">{action.reason}</p>
-          <div className="mt-4 h-1.5 overflow-hidden rounded-full bg-[#E2E8F0]/80">
-            <div className={done ? "h-full rounded-full bg-[#22C55E]" : "h-full rounded-full bg-[#14B8A6]"} style={{ width: `${done ? 100 : action.progress}%` }} />
+          <div className="mt-4 h-2 overflow-hidden rounded-full bg-slate-100">
+            <div className={done ? "h-full rounded-full bg-gradient-to-r from-[#14B8A6] to-[#22C55E]" : "h-full rounded-full bg-gradient-to-r from-[#14B8A6] to-[#22C55E]"} style={{ width: `${done ? 100 : action.progress}%` }} />
           </div>
           <button
             onClick={() => setDone(true)}
-            className={done ? "mt-4 h-10 rounded-full bg-[#F0FDF4] px-4 text-sm font-semibold text-[#15803D]" : "mt-4 h-10 rounded-full bg-[#07111F] px-4 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:shadow-[0_14px_26px_rgba(11,18,32,0.18)]"}
+            className={done ? "mt-4 h-10 rounded-full bg-[#F0FDF4] px-4 text-sm font-semibold text-[#15803D]" : "mt-4 h-10 rounded-full bg-[#07111F] px-5 py-2.5 text-sm font-semibold text-white transition-all duration-200 ease-out hover:-translate-y-0.5 hover:shadow-lg active:translate-y-0"}
           >
             {done ? "Completed" : action.cta}
           </button>
@@ -49,8 +49,7 @@ export function TodayPlanHero({ plan }: { plan: TodayPlanMock }) {
   const hiddenCount = Math.max(0, plan.actions.length - 3);
 
   return (
-    <section className="relative overflow-hidden rounded-3xl bg-white p-6 shadow-[0_24px_70px_rgba(15,23,42,0.075)] sm:p-8">
-      <div className="absolute right-0 top-0 h-72 w-72 rounded-full bg-[#7DD3C7]/20 blur-3xl" />
+    <section className="relative overflow-hidden rounded-[28px] border border-slate-200/70 bg-white p-6 shadow-[0_24px_70px_rgba(15,23,42,0.06)] sm:p-8">
       <div className="relative flex flex-col justify-between gap-5 xl:flex-row xl:items-start">
         <div>
           <p className="text-xs font-bold uppercase tracking-[0.28em] text-[#0F766E]">Today&apos;s LeanDoze Plan</p>
@@ -72,7 +71,7 @@ export function TodayPlanHero({ plan }: { plan: TodayPlanMock }) {
         <button
           type="button"
           onClick={() => setExpanded((value) => !value)}
-          className="relative mt-5 inline-flex min-h-11 items-center gap-2 rounded-full bg-[#F8FAFC] px-4 text-sm font-semibold text-[#0F766E] ring-1 ring-[#E2E8F0] transition hover:-translate-y-0.5 hover:bg-[#ECFEFF]"
+          className="relative mt-6 inline-flex min-h-11 items-center gap-2 rounded-full bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-700 transition-all duration-200 ease-out hover:-translate-y-0.5 hover:bg-slate-200"
         >
           {expanded ? "Show less" : `+ ${hiddenCount} more`}
           <ChevronDown className={expanded ? "h-4 w-4 rotate-180 transition" : "h-4 w-4 transition"} />

@@ -51,13 +51,13 @@ export function ClinicConnectionDrawer({
       <button
         aria-label="Close clinic connection drawer"
         onClick={onClose}
-        className={open ? "absolute inset-0 bg-black/20 opacity-100 backdrop-blur-sm transition-opacity duration-300" : "absolute inset-0 bg-black/0 opacity-0 transition-opacity duration-300"}
+        className={open ? "absolute inset-0 bg-[#07111F]/25 opacity-100 backdrop-blur-sm transition-opacity duration-[280ms] ease-out" : "absolute inset-0 bg-[#07111F]/0 opacity-0 transition-opacity duration-[280ms] ease-out"}
       />
       <aside
         className={
           open
-            ? "absolute right-0 top-0 z-[101] h-full w-full max-w-md translate-x-0 overflow-y-auto bg-white p-6 shadow-[-24px_0_70px_rgba(7,17,31,0.18)] transition-transform duration-300 ease-out sm:rounded-l-[34px]"
-            : "absolute right-0 top-0 z-[101] h-full w-full max-w-md translate-x-full overflow-y-auto bg-white p-6 shadow-[-24px_0_70px_rgba(7,17,31,0.18)] transition-transform duration-300 ease-out sm:rounded-l-[34px]"
+            ? "absolute inset-x-0 bottom-0 z-[101] max-h-[88vh] w-full translate-y-0 overflow-y-auto rounded-t-[28px] bg-white p-6 shadow-[0_-30px_100px_rgba(15,23,42,0.22)] transition-transform duration-[280ms] ease-out sm:inset-x-auto sm:bottom-auto sm:right-0 sm:top-0 sm:h-full sm:max-h-none sm:max-w-md sm:translate-x-0 sm:rounded-l-[32px] sm:rounded-tr-none"
+            : "absolute inset-x-0 bottom-0 z-[101] max-h-[88vh] w-full translate-y-full overflow-y-auto rounded-t-[28px] bg-white p-6 shadow-[0_-30px_100px_rgba(15,23,42,0.22)] transition-transform duration-[280ms] ease-out sm:inset-x-auto sm:bottom-auto sm:right-0 sm:top-0 sm:h-full sm:max-h-none sm:max-w-md sm:translate-x-full sm:translate-y-0 sm:rounded-l-[32px] sm:rounded-tr-none"
         }
       >
         <div className="flex items-start justify-between gap-4">
@@ -71,7 +71,7 @@ export function ClinicConnectionDrawer({
           </button>
         </div>
 
-        <div className="mt-7 space-y-3 rounded-[26px] bg-[#F8FAFC] p-4 ring-1 ring-[#E2E8F0]/80">
+        <div className="mt-6 space-y-3 rounded-[26px] bg-[#F8FAFC] p-4 ring-1 ring-[#E2E8F0]/80">
           <InfoRow label="Clinic" value={connection.clinicName ?? "No clinic selected"} />
           <InfoRow label="Clinician" value={connection.clinicianName ?? "Not assigned yet"} />
           <InfoRow label="Connection date" value={connection.connectionDate ? new Date(connection.connectionDate).toLocaleDateString() : "Not connected"} />

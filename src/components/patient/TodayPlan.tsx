@@ -23,15 +23,15 @@ export function TodayPlan({ plan }: { plan: TodayPlanMock }) {
   const hiddenCount = Math.max(0, plan.actions.length - 3);
 
   return (
-    <section className="relative z-0 rounded-3xl border border-slate-200/70 bg-white p-5 shadow-[0_20px_60px_rgba(15,23,42,0.06)] sm:p-6 lg:p-8">
+    <section className="relative z-0 rounded-[28px] border border-slate-200/70 bg-white p-6 shadow-[0_24px_70px_rgba(15,23,42,0.06)] lg:p-8">
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
         <div>
-          <p className="text-xs font-bold uppercase tracking-[0.28em] text-[#0F766E]">Today&apos;s LeanDoze Plan</p>
-          <h2 className="mt-3 text-3xl font-semibold leading-[1.02] tracking-[-0.045em] text-[#07111F]">Today, focus on what matters most.</h2>
+          <p className="text-xs font-bold uppercase tracking-[0.32em] text-[#0F766E]">Today&apos;s LeanDoze Plan</p>
+          <h2 className="mt-4 text-2xl font-semibold leading-tight tracking-[-0.03em] text-[#07111F]">Today, focus on what matters most.</h2>
         </div>
-        <p className="max-w-sm text-sm leading-6 text-[#64748B]">Small check-ins make your report easier.</p>
+        <p className="max-w-sm text-sm leading-6 text-slate-600">Small check-ins make your report easier.</p>
       </div>
-      <div className="mt-6 grid grid-cols-12 gap-3">
+      <div className="mt-6 grid grid-cols-12 gap-4">
         {visibleActions.map((action) => (
           <div key={action.id} className="col-span-12 xl:col-span-4">
             <ActionCard title={action.title} reason={action.reason} cta={action.cta} progress={action.progress} icon={actionIcon(action)} complete={action.state === "complete"} />
@@ -41,7 +41,7 @@ export function TodayPlan({ plan }: { plan: TodayPlanMock }) {
       {hiddenCount ? (
         <button
           onClick={() => setExpanded((value) => !value)}
-          className="mt-5 inline-flex min-h-11 items-center gap-2 rounded-full bg-[#F8FAFC] px-4 text-sm font-semibold text-[#0F766E] ring-1 ring-[#E2E8F0] transition hover:-translate-y-0.5 hover:bg-[#ECFEFF]"
+          className="mt-6 inline-flex min-h-11 items-center gap-2 rounded-full bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-700 transition-all duration-200 ease-out hover:-translate-y-0.5 hover:bg-slate-200"
         >
           {expanded ? "Show less" : `Show ${hiddenCount} more suggestions`}
           <ChevronDown className={expanded ? "h-4 w-4 rotate-180 transition" : "h-4 w-4 transition"} />
