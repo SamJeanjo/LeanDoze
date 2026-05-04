@@ -4,10 +4,15 @@ import { useState } from "react";
 import { Building2, ChevronRight, Clock3, ShieldCheck } from "lucide-react";
 import { ClinicConnectionDrawer, type ClinicConnection, type ClinicConnectionStatus } from "@/components/patient/ClinicConnectionDrawer";
 
-const visual: Record<ClinicConnectionStatus, { title: string; body: string; action: string; icon: typeof ShieldCheck; dot: string; iconClassName: string }> = {
+const visual: Record<
+  ClinicConnectionStatus,
+  { title: string; compactTitle: string; body: string; compactBody: string; action: string; icon: typeof ShieldCheck; dot: string; iconClassName: string }
+> = {
   not_connected: {
     title: "Connect with your doctor or clinic",
+    compactTitle: "Connect clinic",
     body: "Share reports when you choose.",
+    compactBody: "Share by choice",
     action: "Connect",
     icon: Building2,
     dot: "bg-[#CBD5E1]",
@@ -15,7 +20,9 @@ const visual: Record<ClinicConnectionStatus, { title: string; body: string; acti
   },
   pending: {
     title: "Clinic invite pending",
+    compactTitle: "Invite pending",
     body: "Share reports when accepted.",
+    compactBody: "Awaiting reply",
     action: "Details",
     icon: Clock3,
     dot: "bg-[#F59E0B]",
@@ -23,7 +30,9 @@ const visual: Record<ClinicConnectionStatus, { title: string; body: string; acti
   },
   connected: {
     title: "Connected with Montreal Wellness Clinic",
+    compactTitle: "Clinic connected",
     body: "Dr. Sarah Patel",
+    compactBody: "Montreal Wellness",
     action: "Details",
     icon: ShieldCheck,
     dot: "bg-[#14B8A6]",
@@ -44,6 +53,8 @@ export function ClinicConnectionCard({ connection = defaultConnection, variant =
   const copy = visual[connection.status];
   const Icon = copy.icon;
   const isReport = variant === "report";
+  const title = isReport ? copy.title : copy.compactTitle;
+  const body = isReport ? copy.body : copy.compactBody;
 
   return (
     <>
@@ -53,21 +64,21 @@ export function ClinicConnectionCard({ connection = defaultConnection, variant =
         className={
           isReport
             ? "relative z-0 w-full rounded-3xl border border-slate-200/70 bg-white px-5 py-4 text-left shadow-[0_20px_60px_rgba(15,23,42,0.06)] transition duration-300 hover:-translate-y-0.5 active:scale-[0.99]"
-            : "relative z-0 w-full rounded-2xl border border-slate-200/70 bg-white px-4 py-3 text-left shadow-[0_20px_60px_rgba(15,23,42,0.06)] transition duration-300 hover:-translate-y-0.5 hover:bg-[#F8FAFC] active:scale-[0.99]"
+            : "relative z-0 w-full rounded-2xl border border-slate-200/70 bg-white px-3 py-3 text-left shadow-[0_12px_34px_rgba(15,23,42,0.045)] transition duration-300 hover:-translate-y-0.5 hover:bg-[#F8FAFC] active:scale-[0.99]"
         }
       >
-        <div className="flex items-center gap-3">
-          <div className={`${isReport ? "h-11 w-11" : "h-9 w-9"} grid shrink-0 place-items-center rounded-2xl ring-1 ${copy.iconClassName}`}>
-            <Icon className="h-5 w-5" />
+        <div className="flex min-w-0 items-center gap-3">
+          <div className={`${isReport ? "h-11 w-11" : "h-9 w-9 rounded-xl"} grid shrink-0 place-items-center rounded-2xl ring-1 ${copy.iconClassName}`}>
+            <Icon className={isReport ? "h-5 w-5" : "h-4 w-4"} />
           </div>
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2">
               <span className={`h-2 w-2 shrink-0 rounded-full ${copy.dot}`} />
-              <p className={`${isReport ? "text-base" : "text-sm"} truncate font-semibold tracking-[-0.02em] text-[#07111F]`}>{copy.title}</p>
+              <p className={`${isReport ? "text-base" : "text-[13px]"} truncate font-semibold tracking-[-0.02em] text-[#07111F]`}>{title}</p>
             </div>
-            <p className={`${isReport ? "text-sm" : "text-xs"} mt-1 truncate leading-5 text-[#64748B]`}>{copy.body}</p>
+            <p className={`${isReport ? "text-sm" : "text-[11px]"} mt-0.5 truncate leading-5 text-[#64748B]`}>{body}</p>
           </div>
-          <span className="hidden text-xs font-semibold text-[#0F766E] sm:inline">{copy.action}</span>
+          {isReport ? <span className="hidden text-xs font-semibold text-[#0F766E] sm:inline">{copy.action}</span> : null}
           <ChevronRight className="h-4 w-4 shrink-0 text-[#94A3B8]" />
         </div>
         {isReport ? <p className="mt-4 text-sm leading-6 text-[#64748B]">Reports are shared only when you choose.</p> : null}
