@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { CheckCircle2, Droplet, Dumbbell, HeartPulse, Salad, Utensils } from "lucide-react";
+import { CheckCircle2, ChevronDown, Droplet, Dumbbell, HeartPulse, Salad, Utensils } from "lucide-react";
 import type { TodayAction, TodayPlanMock } from "@/lib/mockPatientData";
 
 const icons = {
@@ -44,27 +44,40 @@ function ActionCard({ action }: { action: TodayAction }) {
 }
 
 export function TodayPlanHero({ plan }: { plan: TodayPlanMock }) {
+  const [expanded, setExpanded] = useState(false);
+  const visibleActions = expanded ? plan.actions : plan.actions.slice(0, 3);
+  const hiddenCount = Math.max(0, plan.actions.length - 3);
+
   return (
-    <section className="relative overflow-hidden rounded-[34px] border border-[#E2E8F0]/80 bg-white p-5 shadow-[0_30px_90px_rgba(15,23,42,0.08)] sm:p-7 xl:p-8">
+    <section className="relative overflow-hidden rounded-3xl bg-white p-6 shadow-[0_24px_70px_rgba(15,23,42,0.075)] sm:p-8">
       <div className="absolute right-0 top-0 h-72 w-72 rounded-full bg-[#7DD3C7]/20 blur-3xl" />
       <div className="relative flex flex-col justify-between gap-5 xl:flex-row xl:items-start">
         <div>
           <p className="text-xs font-bold uppercase tracking-[0.28em] text-[#0F766E]">Today&apos;s LeanDoze Plan</p>
-          <h2 className="mt-4 text-3xl font-semibold leading-[1.02] tracking-[-0.045em] text-[#07111F] sm:text-4xl">
-            Know what to do today.
-          </h2>
-          <p className="mt-3 max-w-2xl text-sm leading-6 text-[#64748B]">{plan.insight}</p>
+          <h2 className="mt-4 text-3xl font-semibold leading-[1.02] tracking-[-0.045em] text-[#07111F] sm:text-4xl">Stay consistent, not perfect.</h2>
+          <p className="mt-3 max-w-2xl text-sm leading-6 text-[#64748B]">Three simple things matter most today. Everything else can wait.</p>
         </div>
-        <div className="rounded-2xl bg-[#FFF7ED] px-4 py-3 text-sm font-semibold text-amber-800 ring-1 ring-orange-100">
+        <div className="rounded-2xl bg-[#FFF7ED] px-4 py-3 text-sm font-semibold text-amber-800 ring-1 ring-orange-100/70">
           Day {plan.doseCycleDay}: {plan.priority}
         </div>
       </div>
 
-      <div className="relative mt-6 grid gap-3 lg:grid-cols-2 2xl:grid-cols-3">
-        {plan.actions.map((action) => (
+      <div className="relative mt-6 grid gap-3 lg:grid-cols-3">
+        {visibleActions.map((action) => (
           <ActionCard key={action.id} action={action} />
         ))}
       </div>
+
+      {hiddenCount ? (
+        <button
+          type="button"
+          onClick={() => setExpanded((value) => !value)}
+          className="relative mt-5 inline-flex min-h-11 items-center gap-2 rounded-full bg-[#F8FAFC] px-4 text-sm font-semibold text-[#0F766E] ring-1 ring-[#E2E8F0] transition hover:-translate-y-0.5 hover:bg-[#ECFEFF]"
+        >
+          {expanded ? "Show less" : `+ ${hiddenCount} more`}
+          <ChevronDown className={expanded ? "h-4 w-4 rotate-180 transition" : "h-4 w-4 transition"} />
+        </button>
+      ) : null}
     </section>
   );
 }
