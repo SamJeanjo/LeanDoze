@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import type { ReactNode } from "react";
 import { X } from "lucide-react";
 
@@ -11,11 +12,23 @@ type ModalProps = {
 };
 
 export function Modal({ open, title, children, onClose }: ModalProps) {
+  useEffect(() => {
+    if (!open) return;
+
+    function closeOnEscape(event: KeyboardEvent) {
+      if (event.key === "Escape") onClose();
+    }
+
+    window.addEventListener("keydown", closeOnEscape);
+
+    return () => window.removeEventListener("keydown", closeOnEscape);
+  }, [onClose, open]);
+
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-[100] hidden place-items-center bg-[#07111F]/25 p-6 backdrop-blur-sm sm:grid">
-      <section className="w-full max-w-lg rounded-[28px] bg-white p-6 shadow-[0_30px_100px_rgba(15,23,42,0.22)]">
+    <div className="fixed inset-0 z-[100] hidden place-items-center bg-[#07111F]/25 p-6 backdrop-blur-sm sm:grid" onMouseDown={onClose}>
+      <section className="max-h-[86vh] w-full max-w-lg overflow-y-auto rounded-[28px] bg-white p-6 shadow-[0_30px_100px_rgba(15,23,42,0.22)]" onMouseDown={(event) => event.stopPropagation()}>
         <div className="flex items-start justify-between gap-4">
           <div>
             <p className="text-xs font-bold uppercase tracking-[0.32em] text-[#0F766E]">Quick check-in</p>

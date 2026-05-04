@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ChevronDown, Droplet, Dumbbell, HeartPulse, Salad, Utensils } from "lucide-react";
 import { ActionCard } from "@/components/ui/ActionCard";
+import { getCompletedActionsForToday, openQuickCheckInEvent, patientStateChangedEvent } from "@/lib/patientStorage";
 import type { TodayAction, TodayPlanMock } from "@/lib/mockPatientData";
 
 const icons = {
@@ -17,10 +18,44 @@ function actionIcon(action: TodayAction) {
   return icons[action.id as keyof typeof icons] ?? HeartPulse;
 }
 
+function quickCheckInType(actionId: string) {
+  const map: Record<string, string> = {
+    "protein-first": "Protein",
+    "hydrate-early": "Water",
+    "log-symptoms": "Symptoms",
+    strength: "Activity",
+    "meal-prep": "Meal",
+  };
+
+  return map[actionId] ?? "Symptoms";
+}
+
 export function TodayPlan({ plan }: { plan: TodayPlanMock }) {
   const [expanded, setExpanded] = useState(false);
-  const visibleActions = expanded ? plan.actions : plan.actions.slice(0, 3);
+  const [completedActions, setCompletedActions] = useState<string[]>([]);
+  const actions = useMemo(
+    () =>
+      plan.actions.map((action) => ({
+        ...action,
+        state: (completedActions.includes(action.id) ? "complete" : action.state === "complete" ? "planned" : action.state) as TodayAction["state"],
+      })),
+    [completedActions, plan.actions],
+  );
+  const visibleActions = expanded ? actions : actions.slice(0, 3);
   const hiddenCount = Math.max(0, plan.actions.length - 3);
+
+  useEffect(() => {
+    const syncCompletedActions = () => setCompletedActions(getCompletedActionsForToday());
+
+    syncCompletedActions();
+    window.addEventListener(patientStateChangedEvent, syncCompletedActions);
+
+    return () => window.removeEventListener(patientStateChangedEvent, syncCompletedActions);
+  }, []);
+
+  function openQuickCheckIn(actionId: string) {
+    window.dispatchEvent(new CustomEvent(openQuickCheckInEvent, { detail: { type: quickCheckInType(actionId) } }));
+  }
 
   return (
     <section className="relative z-0 rounded-[28px] border border-slate-200/70 bg-white p-6 shadow-[0_24px_70px_rgba(15,23,42,0.06)] lg:p-8">
@@ -34,7 +69,15 @@ export function TodayPlan({ plan }: { plan: TodayPlanMock }) {
       <div className="mt-6 grid grid-cols-12 gap-4">
         {visibleActions.map((action) => (
           <div key={action.id} className="col-span-12 xl:col-span-4">
-            <ActionCard title={action.title} reason={action.reason} cta={action.cta} progress={action.progress} icon={actionIcon(action)} complete={action.state === "complete"} />
+            <ActionCard
+              title={action.title}
+              reason={action.reason}
+              cta={action.cta}
+              progress={action.progress}
+              icon={actionIcon(action)}
+              complete={action.state === "complete"}
+              onAction={() => openQuickCheckIn(action.id)}
+            />
           </div>
         ))}
       </div>

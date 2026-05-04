@@ -1,23 +1,41 @@
+"use client";
+
+import { useEffect, useMemo, useState } from "react";
 import { Droplet, Scale, Sparkles, Utensils } from "lucide-react";
 import { MetricCard } from "@/components/ui/MetricCard";
 import { PremiumCard } from "@/components/ui/PremiumCard";
 import { Timeline } from "@/components/ui/Timeline";
 import type { DailyLogMock, PatientProfileMock } from "@/lib/mockPatientData";
 import { nonScaleWins, progressPhotos } from "@/lib/mockPatientData";
-import { hydrationAdherence, proteinAdherence, weightChange } from "@/lib/patientInsights";
+import { hydrationAdherence, proteinAdherence } from "@/lib/patientInsights";
+import { formatLocalLogsForReport, getLatestWeight, getPatientState, getTodaySummary, patientStateChangedEvent } from "@/lib/patientStorage";
 
 export function ProgressOverview({ profile, logs, full = false }: { profile: PatientProfileMock; logs: DailyLogMock[]; full?: boolean }) {
-  const latest = logs[logs.length - 1];
-  const protein = proteinAdherence(logs, profile.proteinGoal);
-  const hydration = hydrationAdherence(logs, profile.hydrationGoal);
+  const [state, setState] = useState(() => getPatientState());
+  const localLogs = useMemo(() => formatLocalLogsForReport(state), [state]);
+  const displayLogs = localLogs.length ? localLogs : logs;
+  const today = getTodaySummary(state);
+  const latest = displayLogs[displayLogs.length - 1];
+  const protein = displayLogs.length ? proteinAdherence(displayLogs, profile.proteinGoal) : 0;
+  const hydration = displayLogs.length ? hydrationAdherence(displayLogs, profile.hydrationGoal) : 0;
+  const currentWeight = today.weight ?? getLatestWeight(state) ?? profile.currentWeight;
+  const weightDelta = Number((currentWeight - profile.startingWeight).toFixed(1));
+
+  useEffect(() => {
+    const sync = () => setState(getPatientState());
+
+    window.addEventListener(patientStateChangedEvent, sync);
+
+    return () => window.removeEventListener(patientStateChangedEvent, sync);
+  }, []);
 
   return (
     <div className="space-y-6">
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <MetricCard label="Current weight" value={`${profile.currentWeight} lb`} helper={`${weightChange(profile)} lb since start`} progress={62} icon={Scale} tone="dark" />
-        <MetricCard label="Protein adherence" value={`${protein}%`} helper={`${latest.proteinGrams}g logged today`} progress={protein} icon={Utensils} tone="green" />
-        <MetricCard label="Hydration adherence" value={`${hydration}%`} helper={`${latest.hydrationOz}oz logged today`} progress={hydration} icon={Droplet} tone="teal" />
-        <MetricCard label="Positive signal" value="Stable" helper="You're building consistency." progress={74} icon={Sparkles} tone="amber" />
+        <MetricCard label="Current weight" value={`${currentWeight} lb`} helper={`${weightDelta} lb since start`} progress={62} icon={Scale} tone="dark" />
+        <MetricCard label="Protein adherence" value={`${protein}%`} helper={`${today.proteinGrams || latest?.proteinGrams || 0}g logged today`} progress={protein} icon={Utensils} tone="green" />
+        <MetricCard label="Hydration adherence" value={`${hydration}%`} helper={`${today.hydrationOz || latest?.hydrationOz || 0}oz logged today`} progress={hydration} icon={Droplet} tone="teal" />
+        <MetricCard label="Positive signal" value={displayLogs.length ? "Building" : "Ready"} helper={displayLogs.length ? "You're building consistency." : "Your progress starts with a quick check-in."} progress={displayLogs.length ? 74 : 12} icon={Sparkles} tone="amber" />
       </div>
 
       {full ? (
@@ -26,7 +44,7 @@ export function ProgressOverview({ profile, logs, full = false }: { profile: Pat
             <p className="text-xs font-bold uppercase tracking-[0.26em] text-[#0F766E]">Weight trend</p>
             <h2 className="mt-3 text-3xl font-semibold tracking-[-0.045em] text-[#07111F]">Is this working?</h2>
             <div className="mt-8 flex h-72 items-end gap-2 rounded-[24px] bg-[#F8FAFC] p-5 ring-1 ring-[#E2E8F0]/80">
-              {logs.map((log) => (
+              {displayLogs.map((log) => (
                 <div key={log.date} className="flex h-full flex-1 flex-col justify-end gap-2">
                   <div className="ld-bar w-full origin-bottom rounded-t-xl bg-gradient-to-t from-[#14B8A6] to-[#7DD3C7] shadow-[0_10px_22px_rgba(20,184,166,0.18)]" style={{ height: `${Math.max(18, Math.min(95, log.weight / 2.4))}%` }} />
                   <span className="hidden text-center text-[10px] font-semibold text-[#64748B] sm:inline">{log.date.slice(5)}</span>

@@ -1,11 +1,26 @@
+"use client";
+
 import Link from "next/link";
+import { useEffect, useMemo, useState } from "react";
 import { FileText, Share2 } from "lucide-react";
 import { PremiumCard } from "@/components/ui/PremiumCard";
 import type { DailyLogMock, PatientProfileMock } from "@/lib/mockPatientData";
 import { clinicianReportSummary } from "@/lib/patientInsights";
+import { formatLocalLogsForReport, getPatientState, patientStateChangedEvent } from "@/lib/patientStorage";
 
 export function ClinicianReportPreview({ profile, logs, full = false }: { profile: PatientProfileMock; logs: DailyLogMock[]; full?: boolean }) {
-  const summary = clinicianReportSummary(logs, profile);
+  const [state, setState] = useState(() => getPatientState());
+  const localLogs = useMemo(() => formatLocalLogsForReport(state), [state]);
+  const displayLogs = localLogs.length ? localLogs : full ? [] : logs;
+  const summary = clinicianReportSummary(displayLogs, profile);
+
+  useEffect(() => {
+    const sync = () => setState(getPatientState());
+
+    window.addEventListener(patientStateChangedEvent, sync);
+
+    return () => window.removeEventListener(patientStateChangedEvent, sync);
+  }, []);
 
   return (
     <PremiumCard className="p-5 sm:p-6 lg:p-8">
@@ -20,21 +35,28 @@ export function ClinicianReportPreview({ profile, logs, full = false }: { profil
         </div>
       </div>
 
-      <div className="mt-6 grid gap-4 sm:grid-cols-2">
-        {[
-          ["Weight trend", summary.weightTrend],
-          ["Symptom notes", summary.symptomNotes],
-          ["Protein / hydration", `${summary.protein}; ${summary.hydration}`],
-          ["Dose adherence", summary.dose],
-        ].map(([label, value]) => (
-          <div key={label} className="relative z-0 rounded-[28px] border border-slate-200/70 bg-white p-4 shadow-[0_24px_70px_rgba(15,23,42,0.06)]">
-            <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#64748B]">{label}</p>
-            <p className="mt-2 text-sm font-semibold leading-6 text-[#07111F]">{value}</p>
-          </div>
-        ))}
-      </div>
+      {displayLogs.length ? (
+        <div className="mt-6 grid gap-4 sm:grid-cols-2">
+          {[
+            ["Weight trend", summary.weightTrend],
+            ["Symptom notes", summary.symptomNotes],
+            ["Protein / hydration", `${summary.protein}; ${summary.hydration}`],
+            ["Dose adherence", summary.dose],
+          ].map(([label, value]) => (
+            <div key={label} className="relative z-0 rounded-[28px] border border-slate-200/70 bg-white p-4 shadow-[0_24px_70px_rgba(15,23,42,0.06)]">
+              <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#64748B]">{label}</p>
+              <p className="mt-2 text-sm font-semibold leading-6 text-[#07111F]">{value}</p>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="mt-6 rounded-[28px] border border-dashed border-slate-300 bg-[#F8FAFC] p-6">
+          <p className="text-base font-semibold text-[#07111F]">Your report will build as you check in.</p>
+          <p className="mt-2 text-sm leading-6 text-slate-600">Log weight, protein, water, and symptoms when you want. Small check-ins make your next visit easier to organize.</p>
+        </div>
+      )}
 
-      {full ? (
+      {full && displayLogs.length ? (
         <div className="relative z-0 mt-6 rounded-[28px] border border-slate-200/70 bg-white p-4 shadow-[0_24px_70px_rgba(15,23,42,0.06)]">
           <p className="text-sm font-semibold text-[#07111F]">Questions for clinician</p>
           <ul className="mt-2 space-y-1 text-sm leading-6 text-[#64748B]">

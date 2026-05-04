@@ -13,10 +13,14 @@ export function weightChange(profile: PatientProfileMock) {
 }
 
 export function proteinAdherence(logs: DailyLogMock[], goal: number) {
+  if (!logs.length) return 0;
+
   return Math.round((logs.filter((log) => log.proteinGrams >= goal * 0.85).length / logs.length) * 100);
 }
 
 export function hydrationAdherence(logs: DailyLogMock[], goal: number) {
+  if (!logs.length) return 0;
+
   return Math.round((logs.filter((log) => log.hydrationOz >= goal * 0.85).length / logs.length) * 100);
 }
 
