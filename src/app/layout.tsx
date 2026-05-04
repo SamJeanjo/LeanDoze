@@ -14,8 +14,12 @@ const robotoMono = Roboto_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://leandoze.com"),
   applicationName: "LeanDoze",
-  title: "LeanDoze — GLP-1 Care. Simplified.",
+  title: {
+    default: "LeanDoze — Your Daily GLP-1 Companion",
+    template: "%s | LeanDoze",
+  },
   description:
     "LeanDoze helps GLP-1 patients manage dose days, protein, hydration, side effects, progress, and clinic visibility.",
   icons: {

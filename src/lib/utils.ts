@@ -3,4 +3,4 @@ export function cn(...classes: Array<string | false | null | undefined>) {
 }
 
 export const disclaimer =
-  "LeanDoze is a tracking and support tool. It does not provide medical diagnosis, treatment, or prescribing advice.";
+  "LeanDoze is a tracking and support tool. It does not provide medical diagnosis, treatment, or prescribing advice. Always consult your healthcare provider for medical questions.";

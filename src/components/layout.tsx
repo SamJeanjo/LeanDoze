@@ -19,7 +19,7 @@ import { disclaimer } from "@/lib/utils";
 
 const navItems = [
   { href: "/app", label: "Patient" },
-  { href: "/clinic", label: "Clinic" },
+  { href: "/for-clinics", label: "Clinic" },
   { href: "/pricing", label: "Pricing" },
 ];
 
@@ -249,6 +249,41 @@ export function ClinicLayout(props: AppLayoutProps) {
 }
 
 export function Footer() {
+  const groups = [
+    {
+      title: "Product",
+      links: [
+        { href: "/glp-1-tracker", label: "GLP-1 tracker" },
+        { href: "/glp-1-side-effect-tracker", label: "Side effect tracker" },
+        { href: "/pricing", label: "Pricing" },
+      ],
+    },
+    {
+      title: "Medications",
+      links: [
+        { href: "/ozempic-tracker", label: "Ozempic tracker" },
+        { href: "/wegovy-tracker", label: "Wegovy tracker" },
+        { href: "/mounjaro-tracker", label: "Mounjaro tracker" },
+      ],
+    },
+    {
+      title: "Clinics",
+      links: [
+        { href: "/for-clinics", label: "For clinics" },
+        { href: "/glp-1-clinic-dashboard", label: "Clinic dashboard" },
+        { href: "/clinic/reports", label: "Reports demo" },
+      ],
+    },
+    {
+      title: "Company",
+      links: [
+        { href: "/", label: "Overview" },
+        { href: "/zepbound-tracker", label: "Zepbound tracker" },
+        { href: "/app", label: "Patient app" },
+      ],
+    },
+  ];
+
   return (
     <footer className="border-t border-slate-200 bg-white">
       <div className="mx-auto grid max-w-7xl gap-8 px-4 py-10 sm:px-6 lg:grid-cols-[1fr_1.4fr] lg:px-8">
@@ -259,13 +294,15 @@ export function Footer() {
           <p className="mt-6 max-w-md text-sm leading-6 text-slate-500">{disclaimer}</p>
         </div>
         <div className="grid grid-cols-2 gap-6 text-sm sm:grid-cols-4">
-          {["Product", "Clinics", "Security", "Company"].map((group) => (
-            <div key={group}>
-              <p className="font-semibold text-slate-950">{group}</p>
+          {groups.map((group) => (
+            <div key={group.title}>
+              <p className="font-semibold text-slate-950">{group.title}</p>
               <div className="mt-3 space-y-2 text-slate-500">
-                <p>Overview</p>
-                <p>Privacy</p>
-                <p>Support</p>
+                {group.links.map((link) => (
+                  <Link key={link.href} href={link.href} className="block transition hover:text-slate-950">
+                    {link.label}
+                  </Link>
+                ))}
               </div>
             </div>
           ))}
