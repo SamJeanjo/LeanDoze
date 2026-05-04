@@ -17,20 +17,20 @@ const statusCopy = {
   not_connected: {
     label: "Not connected",
     tone: "slate" as const,
-    title: "No clinic connected yet",
-    body: "Invite a clinician when you are ready to share a report.",
+    title: "Connect with your doctor or clinic",
+    body: "Share reports when you choose.",
   },
   pending: {
     label: "Pending",
     tone: "amber" as const,
     title: "Invite pending",
-    body: "Your clinician has not accepted the connection yet.",
+    body: "Your clinician has not accepted the connection yet. Reports are not shared automatically.",
   },
   connected: {
     label: "Connected",
     tone: "teal" as const,
-    title: "Clinic connection",
-    body: "Your reports can be shared when you choose.",
+    title: "Connected with Montreal Wellness Clinic",
+    body: "Dr. Sarah Patel",
   },
 };
 
@@ -91,7 +91,7 @@ export function ClinicConnectionDrawer({
         <section className="mt-6 rounded-[24px] bg-[#ECFEFF] p-4 ring-1 ring-[#99F6E4]/70">
           <p className="text-sm font-semibold text-[#0F766E]">Privacy</p>
           <p className="mt-2 text-sm leading-6 text-[#475569]">
-            You choose when to share your reports. LeanDoze does not auto-connect you to a clinic from a code or invite without an explicit action.
+            Reports are shared only when you choose. LeanDoze does not auto-connect you to a clinic from a code or invite without an explicit action.
           </p>
         </section>
 

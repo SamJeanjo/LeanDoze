@@ -1,4 +1,5 @@
 import { Download, Share2 } from "lucide-react";
+import { ClinicConnectionCard } from "@/components/patient/ClinicConnectionCard";
 import { ClinicianReportPreview } from "@/components/patient/ClinicianReportPreview";
 import { PatientShell } from "@/components/patient/PatientShell";
 import { PageHeader } from "@/components/ui/PageHeader";
@@ -30,6 +31,7 @@ export default function PatientReportsPage() {
         />
 
         <ClinicianReportPreview profile={patientProfileMock} logs={dailyLogsMock} full />
+        <ClinicConnectionCard variant="report" />
 
         <PremiumCard className="bg-[#FFF7ED]">
           <p className="text-xs font-bold uppercase tracking-[0.24em] text-amber-800">Review note</p>
