@@ -5,6 +5,7 @@ import { Logo } from "@/components/brand/Logo";
 import { AppShell } from "@/components/ui/AppShell";
 import { DesktopSidebar } from "@/components/patient/DesktopSidebar";
 import { MobileBottomNav, type PatientNavKey } from "@/components/patient/MobileBottomNav";
+import { InstallCard } from "@/components/pwa/InstallCard";
 
 export function PatientShell({ active, children }: { active: PatientNavKey; children: ReactNode }) {
   return (
@@ -22,6 +23,7 @@ export function PatientShell({ active, children }: { active: PatientNavKey; chil
         </div>
       </header>
       {children}
+      <InstallCard />
     </AppShell>
   );
 }
