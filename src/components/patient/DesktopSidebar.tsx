@@ -51,7 +51,7 @@ export function DesktopSidebar({ active }: { active: PatientNavKey }) {
 
         <div className="mt-auto space-y-3">
           <ClinicConnectionCard />
-          <div className="relative z-10 flex items-center justify-between rounded-3xl border border-slate-200/70 bg-white px-4 py-3 shadow-[0_20px_60px_rgba(15,23,42,0.06)]">
+          <div className="relative z-0 flex items-center justify-between rounded-3xl border border-slate-200/70 bg-white px-4 py-3 shadow-[0_20px_60px_rgba(15,23,42,0.06)]">
             <p className="text-sm font-semibold text-[#07111F]">Account</p>
             <UserButton afterSignOutUrl="/" />
           </div>

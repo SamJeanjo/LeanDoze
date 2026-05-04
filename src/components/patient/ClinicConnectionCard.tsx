@@ -52,8 +52,8 @@ export function ClinicConnectionCard({ connection = defaultConnection, variant =
         onClick={() => setOpen(true)}
         className={
           isReport
-            ? "relative z-10 w-full rounded-3xl border border-slate-200/70 bg-white px-5 py-4 text-left shadow-[0_20px_60px_rgba(15,23,42,0.06)] transition duration-300 hover:-translate-y-0.5 active:scale-[0.99]"
-            : "relative z-10 w-full rounded-2xl border border-slate-200/70 bg-white px-4 py-3 text-left shadow-[0_20px_60px_rgba(15,23,42,0.06)] transition duration-300 hover:-translate-y-0.5 hover:bg-[#F8FAFC] active:scale-[0.99]"
+            ? "relative z-0 w-full rounded-3xl border border-slate-200/70 bg-white px-5 py-4 text-left shadow-[0_20px_60px_rgba(15,23,42,0.06)] transition duration-300 hover:-translate-y-0.5 active:scale-[0.99]"
+            : "relative z-0 w-full rounded-2xl border border-slate-200/70 bg-white px-4 py-3 text-left shadow-[0_20px_60px_rgba(15,23,42,0.06)] transition duration-300 hover:-translate-y-0.5 hover:bg-[#F8FAFC] active:scale-[0.99]"
         }
       >
         <div className="flex items-center gap-3">

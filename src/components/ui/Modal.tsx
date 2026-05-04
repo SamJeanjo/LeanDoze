@@ -14,7 +14,7 @@ export function Modal({ open, title, children, onClose }: ModalProps) {
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-[95] hidden place-items-center bg-[#07111F]/35 p-6 backdrop-blur-sm sm:grid">
+    <div className="fixed inset-0 z-[95] hidden place-items-center bg-black/20 p-6 backdrop-blur-sm sm:grid">
       <section className="w-full max-w-lg rounded-[34px] bg-white p-6 shadow-[0_30px_90px_rgba(7,17,31,0.24)]">
         <div className="flex items-start justify-between gap-4">
           <div>

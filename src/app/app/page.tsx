@@ -38,7 +38,7 @@ export default async function PatientTodayPage() {
           </div>
         </div>
 
-        <p className="relative z-10 rounded-3xl border border-slate-200/70 bg-white p-4 text-xs leading-5 text-[#64748B] shadow-[0_20px_60px_rgba(15,23,42,0.06)]">
+        <p className="relative z-0 rounded-3xl border border-slate-200/70 bg-white p-4 text-xs leading-5 text-[#64748B] shadow-[0_20px_60px_rgba(15,23,42,0.06)]">
           LeanDoze is a tracking and support tool. It does not provide medical diagnosis, treatment, or prescribing advice.
         </p>
       </div>

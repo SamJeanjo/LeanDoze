@@ -15,7 +15,7 @@ export function BottomSheet({ open, title, children, onClose }: BottomSheetProps
 
   return (
     <div className="fixed inset-0 z-[90]">
-      <button className="absolute inset-0 bg-[#07111F]/35 backdrop-blur-sm" aria-label="Close sheet" onClick={onClose} />
+      <button className="absolute inset-0 bg-black/20 backdrop-blur-sm" aria-label="Close sheet" onClick={onClose} />
       <section className="absolute inset-x-0 bottom-0 rounded-t-[34px] bg-white p-5 shadow-[0_-28px_80px_rgba(7,17,31,0.25)] sm:hidden">
         <div className="mx-auto h-1.5 w-12 rounded-full bg-[#CBD5E1]" />
         <div className="mt-5 flex items-start justify-between gap-4">

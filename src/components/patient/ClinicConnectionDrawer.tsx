@@ -51,13 +51,13 @@ export function ClinicConnectionDrawer({
       <button
         aria-label="Close clinic connection drawer"
         onClick={onClose}
-        className={open ? "absolute inset-0 bg-[#07111F]/35 opacity-100 backdrop-blur-sm transition-opacity duration-300" : "absolute inset-0 bg-[#07111F]/0 opacity-0 transition-opacity duration-300"}
+        className={open ? "absolute inset-0 bg-black/20 opacity-100 backdrop-blur-sm transition-opacity duration-300" : "absolute inset-0 bg-black/0 opacity-0 transition-opacity duration-300"}
       />
       <aside
         className={
           open
-            ? "absolute right-0 top-0 h-full w-full max-w-md translate-x-0 overflow-y-auto bg-white p-6 shadow-[-28px_0_80px_rgba(7,17,31,0.22)] transition-transform duration-300 ease-out sm:rounded-l-[34px]"
-            : "absolute right-0 top-0 h-full w-full max-w-md translate-x-full overflow-y-auto bg-white p-6 shadow-[-28px_0_80px_rgba(7,17,31,0.22)] transition-transform duration-300 ease-out sm:rounded-l-[34px]"
+            ? "absolute right-0 top-0 z-[101] h-full w-full max-w-md translate-x-0 overflow-y-auto bg-white p-6 shadow-[-24px_0_70px_rgba(7,17,31,0.18)] transition-transform duration-300 ease-out sm:rounded-l-[34px]"
+            : "absolute right-0 top-0 z-[101] h-full w-full max-w-md translate-x-full overflow-y-auto bg-white p-6 shadow-[-24px_0_70px_rgba(7,17,31,0.18)] transition-transform duration-300 ease-out sm:rounded-l-[34px]"
         }
       >
         <div className="flex items-start justify-between gap-4">

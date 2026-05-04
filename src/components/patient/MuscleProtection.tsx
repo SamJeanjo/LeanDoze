@@ -13,7 +13,7 @@ export function MuscleProtection({ profile, logs }: { profile: PatientProfileMoc
 
   return (
     <PremiumCard className="p-6 lg:p-8">
-      <div className="relative z-10 grid grid-cols-12 gap-6 xl:items-center">
+      <div className="relative z-0 grid grid-cols-12 gap-6 xl:items-center">
         <div className="col-span-12 xl:col-span-4">
           <p className="text-xs font-bold uppercase tracking-[0.28em] text-[#0F766E]">Muscle protection</p>
           <h2 className="mt-3 text-3xl font-semibold tracking-[-0.045em]">Support muscle retention habits.</h2>
@@ -32,7 +32,7 @@ export function MuscleProtection({ profile, logs }: { profile: PatientProfileMoc
             ].map((item) => {
               const Icon = item.icon;
               return (
-                <div key={item.label} className="relative z-10 rounded-3xl border border-slate-200/70 bg-white p-3 shadow-[0_20px_60px_rgba(15,23,42,0.06)]">
+                <div key={item.label} className="relative z-0 rounded-3xl border border-slate-200/70 bg-white p-3 shadow-[0_20px_60px_rgba(15,23,42,0.06)]">
                   <div className="flex items-center gap-3">
                     <div className="grid h-9 w-9 place-items-center rounded-xl bg-[#ECFEFF] text-[#0F766E]">
                       <Icon className="h-4 w-4" />
