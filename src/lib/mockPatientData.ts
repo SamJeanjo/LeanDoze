@@ -50,6 +50,7 @@ export type TodayAction = {
 
 export type TodayPlanMock = {
   doseCycleDay: number;
+  nextDoseDate: string;
   priority: string;
   actions: TodayAction[];
   insight: string;
@@ -165,6 +166,7 @@ export const dailyLogsMock: DailyLogMock[] = [
 
 export const todayPlanMock: TodayPlanMock = {
   doseCycleDay: 3,
+  nextDoseDate: "May 7",
   priority: "protein + hydration",
   insight: "Today is a protein + hydration priority day.",
   actions: [

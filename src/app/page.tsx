@@ -3,6 +3,7 @@ import Link from "next/link";
 import type { LucideIcon } from "lucide-react";
 import {
   ArrowRight,
+  BellRing,
   CalendarDays,
   CheckCircle2,
   ClipboardList,
@@ -10,7 +11,9 @@ import {
   FileText,
   HeartPulse,
   LineChart,
+  LockKeyhole,
   ShieldCheck,
+  Sparkles,
   UsersRound,
   Utensils,
 } from "lucide-react";
@@ -56,6 +59,15 @@ const routineFeatures = [
 ];
 
 const medications = ["Ozempic", "Wegovy", "Mounjaro", "Zepbound", "Saxenda", "Victoza", "Rybelsus"];
+
+const launchPillars = [
+  { icon: ClipboardList, title: "Daily Today command center", text: "Dose cycle day, next dose, protein, hydration, symptoms, and one-tap logging on the first screen." },
+  { icon: FileText, title: "Clinician-ready PDF export", text: "Branded summaries with timeline, symptoms by dose day, adherence, weight, protein, hydration, and questions." },
+  { icon: BellRing, title: "Real reminders", text: "Dose day, day-after-dose symptoms, hydration nudge, and weekly report prep." },
+  { icon: UsersRound, title: "Clinic dashboard from real data", text: "Follow-up queues, risk flags, missed-dose trends, symptom spikes, and low-logging patients." },
+  { icon: Sparkles, title: "Premium onboarding", text: "Guided setup for medication, goals, concerns, reminder rhythm, and clinician-sharing preference." },
+  { icon: LockKeyhole, title: "Trust and compliance polish", text: "Consent-first sharing, export/delete controls, and careful health-adjacent language." },
+];
 
 const jsonLd = [
   {
@@ -215,6 +227,25 @@ export default function Home() {
               ))}
             </div>
             <p className="mt-6 max-w-3xl text-sm leading-6 text-slate-500">{medicationTrademarkDisclaimer}</p>
+          </div>
+        </section>
+
+        <section className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8">
+          <SectionIntro eyebrow="Premium experience" title="Built to feel valuable on day one." text="LeanDoze is designed around the moments patients and clinics actually come back for: today, reports, reminders, review queues, and trust." />
+          <div className="mt-10 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
+            {launchPillars.map((feature) => {
+              const Icon = feature.icon;
+
+              return (
+                <article key={feature.title} className="rounded-[1.5rem] border border-slate-200 bg-white p-6 shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-xl">
+                  <div className="mb-8 flex size-11 items-center justify-center rounded-2xl bg-[#ECFEFF] text-teal-700 ring-1 ring-teal-100">
+                    <Icon className="size-5" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-slate-950">{feature.title}</h3>
+                  <p className="mt-3 leading-7 text-slate-600">{feature.text}</p>
+                </article>
+              );
+            })}
           </div>
         </section>
 
