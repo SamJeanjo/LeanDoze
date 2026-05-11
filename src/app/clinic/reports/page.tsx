@@ -1,4 +1,5 @@
 import { AlertTriangle, CalendarX2, HeartPulse, RadioTower, UsersRound } from "lucide-react";
+import { ClinicUpgradeCard } from "@/components/billing/ClinicUpgradeCard";
 import { ClinicLayout } from "@/components/layout";
 import { ClinicReportsAnalytics } from "@/components/reports/ClinicReportsAnalytics";
 import { getClinicAppState } from "@/lib/app-data";
@@ -51,6 +52,8 @@ export default async function ClinicReportsPage() {
         <section className="rounded-[28px] border border-teal-100 bg-[#ECFEFF] p-5 text-sm leading-6 text-slate-700">
           Live metrics above are calculated from connected patient data. The exploration workspace below preserves the premium analytics demo until the full report builder is wired to those same live cohorts.
         </section>
+
+        <ClinicUpgradeCard compact />
 
         <ClinicReportsAnalytics />
       </div>

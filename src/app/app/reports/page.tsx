@@ -1,4 +1,5 @@
 import { CalendarDays, Download, HeartPulse, LineChart, LockKeyhole, Share2, ShieldCheck } from "lucide-react";
+import { PatientUpgradeCard } from "@/components/billing/PatientUpgradeCard";
 import { ClinicConnectionCard } from "@/components/patient/ClinicConnectionCard";
 import { ClinicianReportPreview } from "@/components/patient/ClinicianReportPreview";
 import { PatientShell } from "@/components/patient/PatientShell";
@@ -58,6 +59,7 @@ export default function PatientReportsPage() {
         </section>
 
         <ClinicianReportPreview profile={patientProfileMock} logs={dailyLogsMock} full />
+        <PatientUpgradeCard />
         <ClinicConnectionCard variant="report" />
 
         <PremiumCard className="bg-[#07111F] text-white">

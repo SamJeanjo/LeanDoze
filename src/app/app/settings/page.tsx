@@ -1,4 +1,5 @@
 import { ShieldCheck } from "lucide-react";
+import { PatientUpgradeCard } from "@/components/billing/PatientUpgradeCard";
 import { NotificationSettings } from "@/components/notifications/NotificationSettings";
 import { PatientLayout } from "@/components/layout";
 import { StatusBadge } from "@/components/status-badge";
@@ -17,6 +18,7 @@ export default async function PatientSettingsPage() {
       activePath="/app/settings"
     >
       <div className="space-y-6">
+        <PatientUpgradeCard compact />
         <NotificationSettings />
         <section className="rounded-[28px] border border-[#E2E8F0]/80 bg-white p-8 shadow-[0_12px_35px_rgba(15,23,42,0.055)]">
           <div className="flex items-center gap-3">
